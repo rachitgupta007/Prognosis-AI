@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Inference Shift: Why o1 Changes Hardware</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #4cc9f0, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="inference">
+        <h1>The Inference Shift: Why o1 Changes Hardware</h1>
+        <p class="byline">PART 9: THE SILENCE OF THE AMPS</p>
+
+        <p>You know that feeling. You type a prompt into <strong>ChatGPT o1</strong>, and there is a pause. A silence.
+            The UI pulses "Thinking..." for 20 seconds.</p>
+
+        <p>To a user, this is latency. To a hardware engineer, this is terror. That pause is the sound of 100 kilowatts
+            of silicon screaming. The model is generating thousands of hidden "Chain of Thought" tokens. We are moving
+            from <strong>System 1</strong> (Reflex) to <strong>System 2</strong> (Reasoning).</p>
+
+        <div class="viz-container">
+            <canvas id="viz-inference"></canvas>
+            <div class="caption">Fig 9. The Reasoning Trace: Hidden Tokens & The Memory Wall</div>
+        </div>
+
+        <h3>The Physics: Hitting the Roofline</h3>
+        <p>Inference is <strong>Memory Bound</strong>. To generate one token, you must load the entire model (800GB)
+            from memory. If you generate tokens one by one (Batch Size 1), you are limited by bandwidth, not compute. A
+            B200 with 8 TB/s bandwidth can only generate ~10 tokens/second for a massive model, leaving its PetaFLOPS of
+            compute 99% idle.</p>
+
+        <h3>The Monster: KV Cache Explosion</h3>
+        <p>As o1 "thinks," it builds a massive context window. The <strong>KV Cache</strong> (Key-Value Cache) grows
+            linearly. For a 128k context window on Llama-3-405B, the cache is <strong>66GB per user</strong>. A B200 has
+            192GB of memory. You can fit 2 users. We are drowning in context.</p>
+
+        <h3>The Fix: Speculative Decoding</h3>
+        <p>How do we use the idle compute? <strong>Speculative Decoding</strong>. A small "Writer" model guesses the
+            next 5 tokens cheaply. The giant "Editor" model verifies them all at once. Since the Editor is memory-bound,
+            verifying 5 tokens takes the same time as verifying 1. It's free speed.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

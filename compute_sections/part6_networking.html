@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Nervous System: NVLink, Infiniband & Ultra Ethernet</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #2ecc71, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="networking">
+        <h1>The Nervous System: NVLink, Infiniband & Ultra Ethernet</h1>
+        <p class="byline">PART 6: THE COMPUTER IS THE NETWORK</p>
+
+        <p>Stop looking at the chip. In the era of the 100,000-GPU cluster, the chip is no longer the unit of compute.
+            The chip is merely a node. <strong>The actual computer is the network.</strong></p>
+
+        <p>We are attempting to trick 72 distinct chips in a rack into "hallucinating" that they are a single brain. We
+            are fighting the speed of light, the resistance of copper, and the entropy of packet collisions. If the
+            network jitters by a microsecond, the entire cluster stalls.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-networking"></canvas>
+            <div class="caption">Fig 6. Packet Spraying: Ultra Ethernet vs Traditional ECMP</div>
+        </div>
+
+        <h3>Scale-Up: The Copper Sarcophagus</h3>
+        <p>Inside the rack, we use <strong>NVLink</strong>. This is "Scale-Up." The goal is to make 72 GPUs share memory
+            as if they were one. The bandwidth is insane: <strong>1.8 TB/s per GPU</strong> (28x faster than PCIe Gen
+            5).</p>
+
+        <p>To achieve this, NVIDIA builds a "Copper Sarcophagus"—a dense wall of cabling. Why copper? Because converting
+            electricity to light (optics) takes energy (~15pJ/bit). By keeping the chips close (inches apart), we can
+            drive the signal electrically. But we are hitting the <strong>Skin Effect</strong> limit. You can't run 224G
+            copper traces further than a meter.</p>
+
+        <h3>Scale-Out: The Rebellion of the Ethernet</h3>
+        <p>Once you leave the rack, you need optics. This is "Scale-Out." For years, InfiniBand was the only choice. But
+            now, the <strong>Ultra Ethernet Consortium (UEC)</strong> is fighting back.</p>
+
+        <p>The problem with standard Ethernet is that it is "lossy." If a packet drops, YouTube buffers. If a packet
+            drops in AI training, the entire supercomputer waits. The UEC fix is <strong>Packet Spraying</strong>.
+            Instead of sending a flow down one wire (where it might get stuck), the NIC chops the message into
+            "flowlets" and sprays them across <em>all</em> available paths. It guarantees load balancing and prevents
+            tail latency.</p>
+
+        <h3>The Wildcard: Silicon Photonics</h3>
+        <p>We are running out of "Beachfront" on the chip edge. We can't fit enough copper pins. The future is
+            <strong>Co-Packaged Optics (CPO)</strong>—moving the laser directly onto the chip. If the GPU speaks
+            "light," the distinction between Scale-Up and Scale-Out dissolves. The Data Center becomes the computer.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

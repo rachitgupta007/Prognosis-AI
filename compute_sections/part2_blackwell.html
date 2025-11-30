@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Monolith: Breaking the Reticle Limit</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #76b900, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="blackwell">
+        <h1>The Monolith: Breaking the Reticle Limit</h1>
+        <p class="byline">PART 2: THE PHYSICS OF PACKAGING</p>
+
+        <p>There is a specific feeling you get when you look at a die shot of the <strong>NVIDIA Blackwell
+                B200</strong>. It doesn’t look like a computer chip. It looks like a map of a dense, sprawling
+            metropolis that has run out of land and decided to build <em>bridges</em>.</p>
+
+        <p>If you zoom in, you see a seam. A vertical scar running down the center of the silicon. That scar is the most
+            important feature of the chip. It represents the moment where humanity officially hit the "God Limit" of
+            semiconductor manufacturing—the <strong>Reticle Limit</strong>—and decided to cheat.</p>
+
+        <h3>The 858mm² Prison Cell</h3>
+        <p>To understand why Blackwell is a "stitched" chip, you have to understand the printer. And by printer, I mean
+            the <strong>ASML TWINSCAN NXE:3800E</strong>. This machine projects Extreme Ultraviolet (EUV) light through
+            a mask (the reticle) onto the silicon wafer. But the projection lens has a maximum physical field of view:
+            <strong>26mm x 33mm</strong>.</p>
+
+        <p>This gives us a maximum printable area of roughly <strong>858 mm²</strong>. This is the Reticle Limit. You
+            physically cannot print a chip bigger than this. The lens won't allow it. The optics will distort.</p>
+
+        <p>NVIDIA's previous generation, the H100, was <strong>814 mm²</strong>. They were already touching the walls.
+            For Blackwell, they needed 208 billion transistors. They needed ~1600 mm². The physics said "No." So NVIDIA
+            said, "We will print two, and we will glue them together."</p>
+
+        <div class="viz-container">
+            <canvas id="viz-blackwell"></canvas>
+            <div class="caption">Fig 2. Exploded View: The CoWoS-L Stack & The 10TB/s Stitch</div>
+        </div>
+
+        <h3>The Glue: CoWoS-L & The Interposer Crisis</h3>
+        <p>Connecting these massive dies requires advanced packaging. In the past, we used <strong>CoWoS-S</strong>
+            (Silicon Interposer), where the chips sat on a massive slab of passive silicon. But a silicon slab large
+            enough for two Blackwell dies would be huge, brittle, and impossibly expensive. It would crack under the
+            thermal stress of manufacturing.</p>
+
+        <p>So TSMC invented <strong>CoWoS-L</strong> (Local Silicon Interconnect). Instead of a giant silicon slab, they
+            use a reconstituted organic substrate (like a high-end PCB) for structural integrity. But organic material
+            is "dirty"—you can't print microscopic wires on it. So, they embed tiny <strong>Silicon Bridges
+                (LSI)</strong> inside the substrate, right where the two dies touch.</p>
+
+        <p>Think of it like two islands connected not by a ferry, but by a hyperloop tunnel welded directly into the
+            bedrock. This bridge carries the <strong>NV-HBI (High Bandwidth Interface)</strong>.</p>
+
+        <h3>The 10 TB/s Illusion</h3>
+        <p>The bandwidth across this stitch is <strong>10 Terabytes per second</strong>. To put this in perspective:</p>
+        <ul>
+            <li><strong>PCIe Gen 6:</strong> ~0.25 TB/s</li>
+            <li><strong>H100 Memory Bandwidth:</strong> 3.3 TB/s</li>
+            <li><strong>NV-HBI Stitch:</strong> 10.0 TB/s</li>
+        </ul>
+
+        <p>The connection <em>between the two halves of the chip</em> is 3x faster than the memory of the previous
+            generation's supercomputer. This speed is critical for <strong>Cache Coherency</strong>. It allows the
+            software to treat the two dies as a single logical unit. The programmer doesn't need to know it's a
+            Frankenstein chip. They just see one massive pool of logic.</p>
+
+        <h3>The Yield Economics</h3>
+        <p>Why go through this pain? Because of the Yield Curve. Semiconductor yield follows an exponential decay based
+            on area ($A$) and defect density ($D_0$):</p>
+
+        <p>$$ Y = e^{-D_0 \cdot A} $$</p>
+
+        <p>If you tried to print a monolithic 1600 mm² chip, your yield would be near zero. A single speck of dust would
+            kill the entire superchip. By printing two 800 mm² chips, you stay on the safe side of the curve, bin them,
+            and then stitch the good ones. It is the only economic way to build big silicon.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

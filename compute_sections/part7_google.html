@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Google Mesh: TPU v7 Ironwood & The Optical Loom</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #4285F4, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="google">
+        <h1>The Google Mesh: TPU v7 Ironwood & The Optical Loom</h1>
+        <p class="byline">PART 7: TRAFFIC LIGHTS VS MIRRORS</p>
+
+        <p>If you walk into an NVIDIA H100 SuperPOD, you are assaulted by the sound of air. It is a hurricane of fans
+            screaming to cool the electrical switches. It is a violent, synchronous machine.</p>
+
+        <p>If you walk into a Google TPU v7 "Ironwood" pod, the vibe is unsettlingly different. It’s... quieter. While
+            NVIDIA builds the world’s fastest traffic system using <strong>Traffic Lights</strong> (Electrical Packet
+            Switches), Google builds a system using <strong>Mirrors</strong> (Optical Circuit Switches).</p>
+
+        <div class="viz-container">
+            <canvas id="viz-google"></canvas>
+            <div class="caption">Fig 7. The Optical Loom: Self-Healing with OCS Mirrors</div>
+        </div>
+
+        <h3>The Physics: Systolic Arrays & The Memory Wall</h3>
+        <p>The TPU v7 Ironwood is not a GPU. It is a <strong>Systolic Array</strong>. Data flows through the chip like
+            blood through a heart, reusing weights thousands of times. This makes it incredibly efficient for matrix
+            math (4.6 PFLOPS per chip). But it also makes it bandwidth-hungry. That's why Google put <strong>192GB of
+                HBM3e</strong> on every chip—to hold the massive KV Cache of trillion-parameter models.</p>
+
+        <h3>The Topology: The Twisted Torus</h3>
+        <p>NVIDIA uses a "Fat Tree" (Clos Network) with massive central switches. Google uses a <strong>3D
+                Torus</strong>. Every chip connects directly to its neighbors in X, Y, and Z axes. There is no central
+            switch. The network diameter is small ($N^{1/3}/2$). But if one chip fails, the whole line breaks.</p>
+
+        <h3>The Secret Weapon: Apollo OCS</h3>
+        <p>This is where the mirrors come in. The <strong>Optical Circuit Switch (OCS)</strong> uses MEMS mirrors
+            suspended in a vacuum. It consumes <strong>zero power</strong> to hold a connection. It doesn't convert
+            light to electricity; it just bounces it.</p>
+
+        <p>If a TPU fails, the OCS simply tilts a mirror. It creates a detour around the dead node in milliseconds. The
+            network "heals" itself. This allows Google to build "Planetary Scale Computers" where physical distance is
+            irrelevant. A TPU in Row 1 can talk to a TPU in Row 500 as if they were neighbors, stitched together by
+            light.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Light Source: ASML & High-NA EUV</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #d946ef, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .viz-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+
+        button.active {
+            background: #d946ef;
+            border-color: #d946ef;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="asml">
+        <h1>The Light Source: ASML & High-NA EUV</h1>
+        <p class="byline">PART 3: THE GROUNDING LAYER</p>
+
+        <p>If you peel back the layers of abstraction—past the PyTorch geometric libraries, past the CUDA kernels, past
+            the architectural diagrams of the NVIDIA Blackwell—you eventually hit the bottom. You hit the "Grounding
+            Layer" of physics. And at the bottom of the stack, the entire AI revolution rests on a single machine: the
+            <strong>ASML TWINSCAN EXE:5200</strong>.</p>
+
+        <p>It costs <strong>$380 million</strong>. It weighs 150 metric tons. It consumes more electricity than a small
+            town. And it is the only device in human history capable of <strong>High-NA Extreme Ultraviolet
+                (EUV)</strong> lithography.</p>
+
+        <h3>The Physics of 13.5nm</h3>
+        <p>To print 2nm transistors, we need light with a wavelength of <strong>13.5 nanometers</strong>. This isn't
+            really "light"; it's ionizing radiation. It is absorbed by everything—air, glass, lenses. So we generate it
+            by shooting a droplet of molten tin with a laser, twice, 50,000 times a second, to create a plasma hotter
+            than the sun (220,000°C).</p>
+
+        <p>The "Wall Plug Efficiency" of this process is roughly 0.02%. We dump megawatts of electricity into the lasers
+            to get a measly 250 Watts of EUV light. It is the most inefficient lightbulb in the universe, but it is the
+            only one that can print a 2nm transistor.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-asml"></canvas>
+            <div class="viz-controls">
+                <button id="btn-low-na" class="active">Low-NA (0.33)</button>
+                <button id="btn-high-na">High-NA (0.55)</button>
+            </div>
+            <div class="caption">Fig 3. The Photon Pinball: High-NA vs Low-NA Optics</div>
+        </div>
+
+        <h3>High-NA: The Anamorphic Revolution</h3>
+        <p>For the last decade, we used lenses with a Numerical Aperture (NA) of 0.33. This hit a limit at ~30nm pitch.
+            To go smaller, we needed a bigger lens. Enter <strong>High-NA (0.55)</strong>.</p>
+
+        <p>This allows us to print features with ~8nm resolution. But there is a catch. To capture light at such wide
+            angles, the optics had to become <strong>Anamorphic</strong>. They squeeze the image by 4x in one direction
+            and 8x in the other. This creates the "Half-Field" problem: the maximum field size shrinks from 26x33mm to
+            <strong>26x16.5mm</strong>.</p>
+
+        <p>This forces the "stitching" we saw with Blackwell. You literally cannot print a massive GPU in one shot
+            anymore.</p>
+
+        <h3>Stochastics: The Shot Noise Nightmare</h3>
+        <p>At this scale, light is not a wave; it is a hail of buckshot. EUV photons are so energetic that we have very
+            few of them. This leads to <strong>Photon Shot Noise</strong> (Poisson distribution). If only 50 photons
+            land on a transistor gate, the statistical variation is $\sqrt{50} \approx 7$, or 14%.</p>
+
+        <p>This noise creates jagged edges on the transistors (Line Edge Roughness). To fix it, we have to increase the
+            "Dose"—flooding the wafer with more light. But more light means slower printing. This is the brutal
+            trade-off of the Angstrom era.</p>
+
+        <h3>The Economics: Why $380 Million is a Deal</h3>
+        <p>Why pay $380 million for a machine? Because it replaces <strong>Quadruple Patterning (SAQP)</strong>. With
+            older machines, to print a 2nm line, you had to expose the wafer four times. That's 4x the time, 4x the
+            defect risk. With High-NA, you print it in one shot. The math is simple: One $380M machine is cheaper than
+            four $180M machines running in a conga line.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

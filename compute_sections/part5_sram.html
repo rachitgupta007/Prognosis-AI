@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The SRAM Thesis: Groq & Cerebras</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00ccff, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="sram">
+        <h1>The SRAM Thesis: Groq & Cerebras</h1>
+        <p class="byline">PART 5: THE FERRARI IN THE SCHOOL ZONE</p>
+
+        <p>Picture a Ferrari SF90 Stradale. It has 986 horsepower. It is designed to scream at 211 mph. Now, imagine its
+            only job is to drive children to a school 500 feet away. But there is a catch: the speed limit is 5 mph,
+            there are forty-seven speed bumps, and every 64 milliseconds, the engine automatically shuts off and
+            restarts.</p>
+
+        <p>This is your GPU on <strong>High Bandwidth Memory (HBM)</strong>.</p>
+
+        <p>The logic cores of an NVIDIA Blackwell are the Ferrari. They are begging to crunch matrices. But they spend
+            the vast majority of their existence <em>waiting</em>. They are waiting for data to traverse the "long"
+            copper traces from the HBM stacks. In the nanosecond time-scale of a transistor, millimeters are miles.</p>
+
+        <p><strong>The SRAM Thesis</strong> asks a simple, dangerous question: <em>Why move data at all?</em> What if we
+            glued the library directly to the reader's retinas?</p>
+
+        <div class="viz-container">
+            <canvas id="viz-sram"></canvas>
+            <div class="caption">Fig 5. The Race Track: Deterministic SRAM vs Jittery HBM</div>
+        </div>
+
+        <h3>The Physics: 6T vs 1T1C</h3>
+        <p>To understand why Groq feels "instant," we have to look at the circuit topology.</p>
+        <ul>
+            <li><strong>DRAM (1T1C):</strong> One Transistor, One Capacitor. It's a leaky bucket. You have to refresh it
+                every 64ms. Reading it is destructive (you drain the bucket and have to refill it). Latency:
+                <strong>~50ns</strong>.</li>
+            <li><strong>SRAM (6T):</strong> Six Transistors in a cross-coupled loop. It's an "Iron Grip." No refresh.
+                Non-destructive read. Latency: <strong>~0.5ns</strong>.</li>
+        </ul>
+
+        <p>SRAM is <strong>100x faster</strong>. But there is a catch.</p>
+
+        <h3>The Density Tax</h3>
+        <p>SRAM uses 6 transistors per bit. DRAM uses 1. This means SRAM is roughly <strong>100x larger</strong>
+            physically. A Blackwell GPU holds 192GB of HBM. A Groq chip holds only ~230MB of SRAM.</p>
+
+        <p>To run Llama-3-70B (140GB), you need <strong>one</strong> NVIDIA GPU ($30k). Or you need <strong>600</strong>
+            Groq chips ($1M+ rack). This forces a bifurcation in the market:</p>
+        <ul>
+            <li><strong>Throughput Economy (NVIDIA):</strong> Offline batching. Cheap per token. High latency.</li>
+            <li><strong>Latency Economy (Groq):</strong> Real-time agents. Expensive per token. Instant response.</li>
+        </ul>
+
+        <p>Groq is betting that as AI shifts from "Chatbots" to "Agents," the value of <strong>Time</strong> will exceed
+            the cost of <strong>Silicon</strong>.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

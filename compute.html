@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compute-Centric Scaling | Prognosis AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap"
+        rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Specific overrides for the essay */
+        main {
+            max-width: 740px;
+            margin: 140px auto 6rem;
+            /* Increased from 100px to prevent header overlap */
+            padding: 0 2rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-family: var(--f-mono);
+            color: var(--c-accent);
+            font-size: 0.9rem;
+            margin-bottom: 4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-top: 4rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            border-top: 1px solid var(--c-grid);
+            padding-top: 2rem;
+        }
+
+        h3 {
+            font-family: var(--f-mono);
+            font-size: 1.1rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--c-ink-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.15rem;
+            color: var(--c-ink);
+        }
+
+        ul {
+            margin-bottom: 2rem;
+            padding-left: 1.5rem;
+            font-family: var(--f-mono);
+            font-size: 0.95rem;
+            color: var(--c-ink-soft);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        blockquote {
+            border-left: 3px solid var(--c-accent);
+            padding-left: 1.5rem;
+            margin: 2.5rem 0;
+            font-style: italic;
+            color: var(--c-ink-soft);
+            font-size: 1.2rem;
+        }
+
+        .viz-container {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--c-grid);
+            border-radius: 4px;
+            padding: 2rem;
+            margin: 3rem -2rem;
+        }
+
+        canvas {
+            width: 100%;
+            /* Height is set dynamically by JS */
+            display: block;
+        }
+
+        .caption {
+            font-family: var(--f-mono);
+            color: var(--c-ink-soft);
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        /* MathJax overrides */
+        mjx-container {
+            font-size: 1.1rem !important;
+            color: var(--c-ink) !important;
+        }
+
+        .methodology {
+            margin-top: 6rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--c-grid);
+            font-size: 0.9rem;
+            color: var(--c-ink-soft);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-left">
+            <a href="index.html" class="logo">Prognosis AI</a>
+            <div class="nav-status">
+                <div class="status-dot"></div>
+                <span>LIVE</span>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Intelligence</a>
+            <a href="compute.html" class="active">Compute</a>
+            <a href="models.html">Models</a>
+            <a href="#">Energy</a>
+        </div>
+    </nav>
+
+    <main>
+        <!-- INTRO -->
+        <h1>The Thermodynamics of the Scream</h1>
+        <div class="subtitle">An Analysis of Compute-Centric Scaling</div>
+
+        <p>There is a specific sound a data center makes when it pushes past the Gigawatt threshold. It is not the "hum"
+            of the early internet, which sounded like a library refrigerator. It is a <strong>scream</strong>.</p>
+
+        <p>If you stand next to a modern <strong>NVIDIA GB200 NVL72</strong> rack, you are standing next to a
+            thermodynamic event. This single rack—a black monolith of 72 Blackwell GPUs and 36 Grace CPUs—consumes
+            <strong>120 to 140 kilowatts</strong> of power depending on the workload. Let’s pause and feel the "oomph"
+            of that number.
+        </p>
+
+        <p>A typical American home draws 1.2 kW on average. A human brain runs on ~20 watts. This single rack, occupying
+            a mere 2x4 floor tile, draws as much power as <strong>100 homes</strong> or <strong>6,000 human
+                brains</strong>. It pumps out heat with the intensity of a small volcanic vent. The heat flux density on
+            the B200 die—pushing 1,000 watts through an 800mm² reticle—is approximately <strong>1.25 MW/m²</strong>. For
+            reference, the heat flux at the surface of a nuclear fuel rod in a pressurized light water reactor is about
+            <strong>1 MW/m²</strong>.
+        </p>
+
+        <p>We have effectively trapped a localized nuclear event inside a server cabinet, multiplied it by ten thousand,
+            and taught it to speak English.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-oomph"></canvas>
+            <div class="caption">Fig 1. The Ladder of Oomph: From Biology to Geology (Log Scale)</div>
+        </div>
+
+        <h3>From Industrial to Geological</h3>
+        <p>If you were to touch the coolant loop (don't), you wouldn't feel warm water. You would feel the waste heat of
+            a synthetic star. We are no longer building "computers" in the sense of the beige boxes that sat on desks in
+            the 1990s. We are building synthetic organisms that eat gigawatts. We are moving from <strong>Industrial
+                Scale</strong> (factories, warehouses, logistics) to <strong>Geological Scale</strong> (tectonic plates,
+            rivers, aquifers).</p>
+
+        <p>The core thesis of this essay is simple but terrifying: <strong>The unit of AI progress is no longer the
+                "Idea." It is the Joule.</strong></p>
+
+        <h3>The Scaling Hypothesis</h3>
+        <p>Why does "Oomph" matter? Because we hit the wall. For forty years, Moore's Law was the dominant force in
+            human progress. It was a story about shrinking. We made the transistor smaller, so the electrons had less
+            distance to travel, so they got faster and cheaper. But around 2020, physics filed a restraining order.</p>
+
+        <p>We are now driven by the <strong>Scaling Hypothesis</strong>. As formalized by Gwern Branwen and empirically
+            verified by Epoch AI, the performance of a model \( L \) is a power-law function of the compute used to
+            train
+            it \( C \):</p>
+
+        <blockquote>$$ L(C) \propto C^{-\alpha} $$</blockquote>
+
+        <p>This equation is the most expensive mathematical expression in human history. It says that if you want a
+            smarter model—one that can solve the Navier-Stokes equations, or route global logistics, or write a better
+            essay than this one—you simply need to pour more Joules into the furnace.</p>
+
+        <p>The rumors surrounding the Microsoft/OpenAI "Stargate" project cite a power requirement of <strong>5
+                Gigawatts (GW)</strong> by 2028. Let's contextualize 5GW:</p>
+        <ul>
+            <li><strong>The Hoover Dam:</strong> Generates ~2 GW.</li>
+            <li><strong>Palo Verde Nuclear Station:</strong> Generates ~3.3 GW.</li>
+            <li><strong>Stargate:</strong> Demands 5 GW.</li>
+        </ul>
+
+        <p>We are talking about a single facility that consumes more power than the largest nuclear power plant in the
+            United States. This is why Microsoft is signing deals with Constellation Energy to restart Three Mile
+            Island. They aren't just buying electricity; they are buying the <em>means of production</em> of
+            electricity.</p>
+
+        <!-- BLACKWELL -->
+        <h2>The Monolith: Breaking the Reticle Limit</h2>
+
+        <p>There is a specific feeling you get when you look at a die shot of the <strong>NVIDIA Blackwell
+                B200</strong>. It doesn’t look like a computer chip. It looks like a map of a dense, sprawling
+            metropolis that has run out of land and decided to build <em>bridges</em>.</p>
+
+        <p>If you zoom in, you see a seam. A vertical scar running down the center of the silicon. That scar is the most
+            important feature of the chip. It represents the moment where humanity officially hit the "God Limit" of
+            semiconductor manufacturing—the <strong>Reticle Limit</strong>—and decided to cheat.</p>
+
+        <h3>The 858mm² Prison Cell</h3>
+        <p>To understand why Blackwell is a "stitched" chip, you have to understand the printer. And by printer, I mean
+            the <strong>ASML TWINSCAN NXE:3800E</strong>. This machine projects Extreme Ultraviolet (EUV) light through
+            a mask (the reticle) onto the silicon wafer. But the projection lens has a maximum physical field of view:
+            <strong>26mm x 33mm</strong>.
+        </p>
+
+        <p>This gives us a maximum printable area of roughly <strong>858 mm²</strong>. This is the Reticle Limit. You
+            physically cannot print a chip bigger than this. The lens won't allow it. The optics will distort.</p>
+
+        <p>NVIDIA's previous generation, the H100, was <strong>814 mm²</strong>. They were already touching the walls.
+            For Blackwell, they needed 208 billion transistors. They needed ~1600 mm². The physics said "No." So NVIDIA
+            said, "We will print two, and we will glue them together."</p>
+
+        <div class="viz-container">
+            <canvas id="viz-blackwell"></canvas>
+            <div class="caption">Fig 2. Exploded View: The CoWoS-L Stack & The 10TB/s Stitch</div>
+        </div>
+
+        <h3>The Glue: CoWoS-L & The Interposer Crisis</h3>
+        <p>Connecting these massive dies requires advanced packaging. In the past, we used <strong>CoWoS-S</strong>
+            (Silicon Interposer), where the chips sat on a massive slab of passive silicon. But a silicon slab large
+            enough for two Blackwell dies would be huge, brittle, and impossibly expensive. It would crack under the
+            thermal stress of manufacturing.</p>
+
+        <p>So TSMC invented <strong>CoWoS-L</strong> (Local Silicon Interconnect). Instead of a giant silicon slab, they
+            use a reconstituted organic substrate (like a high-end PCB) for structural integrity. But organic material
+            is "dirty"—you can't print microscopic wires on it. So, they embed tiny <strong>Silicon Bridges
+                (LSI)</strong> inside the substrate, right where the two dies touch.</p>
+
+        <p>Think of it like two islands connected not by a ferry, but by a hyperloop tunnel welded directly into the
+            bedrock. This bridge carries the <strong>NV-HBI (High Bandwidth Interface)</strong>.</p>
+
+        <h3>The 10 TB/s Illusion</h3>
+        <p>The bandwidth across this stitch is <strong>10 Terabytes per second</strong>. To put this in perspective:</p>
+        <ul>
+            <li><strong>PCIe Gen 6:</strong> ~0.25 TB/s</li>
+            <li><strong>H100 Memory Bandwidth:</strong> 3.3 TB/s</li>
+            <li><strong>NV-HBI Stitch:</strong> 10.0 TB/s</li>
+        </ul>
+
+        <p>The connection <em>between the two halves of the chip</em> is 3x faster than the memory of the previous
+            generation's supercomputer. This speed is critical for <strong>Cache Coherency</strong>. It allows the
+            software to treat the two dies as a single logical unit. The programmer doesn't need to know it's a
+            Frankenstein chip. They just see one massive pool of logic.</p>
+
+        <h3>The Yield Economics</h3>
+        <p>Why go through this pain? Because of the Yield Curve. Semiconductor yield follows an exponential decay based
+            on area \( A \) and defect density \( D_0 \):</p>
+
+        <blockquote>$$ Y = e^{-D_0 \cdot A} $$</blockquote>
+
+        <p>If you tried to print a monolithic 1600 mm² chip, your yield would be near zero. A single speck of dust would
+            kill the entire superchip. By printing two 800 mm² chips, you stay on the safe side of the curve, bin them,
+            and then stitch the good ones. It is the only economic way to build big silicon.</p>
+
+        <!-- ASML -->
+        <h2>The Light Source: ASML & High-NA EUV</h2>
+
+        <p>If you peel back the layers of abstraction—past the PyTorch geometric libraries, past the CUDA kernels, past
+            the architectural diagrams of the NVIDIA Blackwell—you eventually hit the bottom. You hit the "Grounding
+            Layer" of physics. And at the bottom of the stack, the entire AI revolution rests on a single machine: the
+            <strong>ASML TWINSCAN EXE:5200</strong>.
+        </p>
+
+        <p>It costs <strong>$380 million</strong>. It weighs 150 metric tons. It consumes more electricity than a small
+            town. And it is the only device in human history capable of <strong>High-NA Extreme Ultraviolet
+                (EUV)</strong> lithography.</p>
+
+        <h3>The Physics of 13.5nm</h3>
+        <p>To print 2nm transistors, we need light with a wavelength of <strong>13.5 nanometers</strong>. This isn't
+            really "light"; it's ionizing radiation. It is absorbed by everything—air, glass, lenses. So we generate it
+            by shooting a droplet of molten tin with a laser, twice, 50,000 times a second, to create a plasma hotter
+            than the sun (220,000°C).</p>
+
+        <p>The "Wall Plug Efficiency" of this process is roughly 0.02%. We dump megawatts of electricity into the lasers
+            to get a measly 250 Watts of EUV light. It is the most inefficient lightbulb in the universe, but it is the
+            only one that can print a 2nm transistor.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-asml"></canvas>
+            <div class="viz-controls">
+                <button id="btn-low-na" class="viz-btn active">Low-NA (0.33)</button>
+                <button id="btn-high-na" class="viz-btn">High-NA (0.55)</button>
+            </div>
+            <div class="caption">Fig 3. The Photon Pinball: High-NA vs Low-NA Optics</div>
+        </div>
+
+        <h3>High-NA: The Anamorphic Revolution</h3>
+        <p>For the last decade, we used lenses with a Numerical Aperture (NA) of 0.33. This hit a limit at ~30nm pitch.
+            To go smaller, we needed a bigger lens. Enter <strong>High-NA (0.55)</strong>.</p>
+
+        <p>This allows us to print features with ~8nm resolution. But there is a catch. To capture light at such wide
+            angles, the optics had to become <strong>Anamorphic</strong>. They squeeze the image by 4x in one direction
+            and 8x in the other. This creates the "Half-Field" problem: the maximum field size shrinks from 26x33mm to
+            <strong>26x16.5mm</strong>.
+        </p>
+
+        <p>This forces the "stitching" we saw with Blackwell. You literally cannot print a massive GPU in one shot
+            anymore.</p>
+
+        <h3>Stochastics: The Shot Noise Nightmare</h3>
+        <p>At this scale, light is not a wave; it is a hail of buckshot. EUV photons are so energetic that we have very
+            few of them. This leads to <strong>Photon Shot Noise</strong> (Poisson distribution). If only 50 photons
+            land on a transistor gate, the statistical variation is \( \sqrt{50} \approx 7 \), or 14%.</p>
+
+        <p>This noise creates jagged edges on the transistors (Line Edge Roughness). To fix it, we have to increase the
+            "Dose"—flooding the wafer with more light. But more light means slower printing. This is the brutal
+            trade-off of the Angstrom era.</p>
+
+        <!-- MEMORY -->
+        <h2>The Memory Wall: HBM3e & The Bandwidth Crisis</h2>
+
+        <p>Let’s start with a visceral image. You have built a fusion reactor in your basement. It burns with the heat
+            of a thousand suns. It is a masterpiece of high-energy physics. It craves fuel. But instead of a
+            high-pressure plasma injection line, you are feeding it deuterium through a plastic coffee stirrer.</p>
+
+        <p>This is the state of AI hardware in late 2025. We have built computational gods. The <strong>NVIDIA
+                B200</strong> is a silicon leviathan capable of PetaFLOPS of compute. But for 40% of its operational
+            life, this god is asleep. It is starving. It is waiting for data to arrive from a memory bank a few
+            millimeters away.</p>
+
+        <p>We have scaled compute by <strong>1000x</strong> in the last decade, but the pipe that feeds it—memory
+            bandwidth—has only grown by <strong>100x</strong>. This is the <strong>Memory Wall</strong>.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-memory"></canvas>
+            <div class="caption">Fig 4. The Traffic Jam: HBM Bandwidth vs Compute Throughput</div>
+        </div>
+
+        <h3>The Physics: Drilling Holes in Sand</h3>
+        <p>To understand the solution, we have to look at the First Principles of moving electrons. The energy required
+            to drive a signal across a wire is proportional to capacitance \( C \) and distance:</p>
+
+        <blockquote>$$ E \approx \frac{1}{2} C V^2 $$</blockquote>
+
+        <p>If you move data 50mm across a PCB, you are fighting massive capacitance. You have to shout to be heard. This
+            burns power. The solution is <strong>Verticality</strong>. We don't wire memory around the edges; we drill
+            holes <em>through</em> the silicon itself. These are <strong>Through-Silicon Vias (TSVs)</strong>.</p>
+
+        <p>A single HBM3e stack has over <strong>1,024 TSVs</strong>. By going vertical, we shorten the wire length from
+            centimeters to micrometers. This allows a single stack to deliver <strong>1.2 TB/s</strong>. The Blackwell
+            GPU uses eight of them.</p>
+
+        <h3>The "Bill Dally Tax"</h3>
+        <p>Why do we pay the insane premium for HBM? Because arithmetic is free, but communication is expensive. NVIDIA
+            Chief Scientist Bill Dally quantified this:</p>
+        <ul>
+            <li><strong>Doing a Float16 Multiply:</strong> ~0.1 picoJoules (pJ)</li>
+            <li><strong>Reading from HBM:</strong> ~50 pJ</li>
+            <li><strong>Reading from Off-Chip DDR:</strong> ~500 pJ</li>
+        </ul>
+
+        <p>Data movement costs <strong>500x</strong> more than compute. If you write a sloppy kernel that moves data
+            unnecessarily, you are effectively paying FedEx to ship a package across the country just to open it and
+            close it immediately.</p>
+
+        <!-- SRAM -->
+        <h2>The SRAM Thesis: Groq & Cerebras</h2>
+
+        <p>Picture a Ferrari SF90 Stradale. It has 986 horsepower. It is designed to scream at 211 mph. Now, imagine its
+            only job is to drive children to a school 500 feet away. But there is a catch: the speed limit is 5 mph,
+            there are forty-seven speed bumps, and every 64 milliseconds, the engine automatically shuts off and
+            restarts.</p>
+
+        <p>This is your GPU on <strong>High Bandwidth Memory (HBM)</strong>.</p>
+
+        <p>The logic cores of an NVIDIA Blackwell are the Ferrari. They are begging to crunch matrices. But they spend
+            the vast majority of their existence <em>waiting</em>. They are waiting for data to traverse the "long"
+            copper traces from the HBM stacks. In the nanosecond time-scale of a transistor, millimeters are miles.</p>
+
+        <p><strong>The SRAM Thesis</strong> asks a simple, dangerous question: <em>Why move data at all?</em> What if we
+            glued the library directly to the reader's retinas?</p>
+
+        <div class="viz-container">
+            <canvas id="viz-sram"></canvas>
+            <div class="caption">Fig 5. The Race Track: Deterministic SRAM vs Jittery HBM</div>
+        </div>
+
+        <h3>The Physics: 6T vs 1T1C</h3>
+        <p>To understand why Groq feels "instant," we have to look at the circuit topology.</p>
+        <ul>
+            <li><strong>DRAM (1T1C):</strong> One Transistor, One Capacitor. It's a leaky bucket. You have to refresh it
+                every 64ms. Reading it is destructive (you drain the bucket and have to refill it). Latency:
+                <strong>~50ns</strong>.
+            </li>
+            <li><strong>SRAM (6T):</strong> Six Transistors in a cross-coupled loop. It's an "Iron Grip." No refresh.
+                Non-destructive read. Latency: <strong>~0.5ns</strong>.</li>
+        </ul>
+
+        <p>SRAM is <strong>100x faster</strong>. But there is a catch.</p>
+
+        <h3>The Density Tax</h3>
+        <p>SRAM uses 6 transistors per bit. DRAM uses 1. This means SRAM is roughly <strong>100x larger</strong>
+            physically. A Blackwell GPU holds 192GB of HBM. A Groq chip holds only ~230MB of SRAM.</p>
+
+        <p>To run Llama-3-70B (140GB), you need <strong>one</strong> NVIDIA GPU ($30k). Or you need <strong>600</strong>
+            Groq chips ($1M+ rack). This forces a bifurcation in the market:</p>
+        <ul>
+            <li><strong>Throughput Economy (NVIDIA):</strong> Offline batching. Cheap per token. High latency.</li>
+            <li><strong>Latency Economy (Groq):</strong> Real-time agents. Expensive per token. Instant response.</li>
+        </ul>
+
+        <!-- NETWORKING -->
+        <h2>The Nervous System: NVLink, Infiniband & Ultra Ethernet</h2>
+
+        <p>Stop looking at the chip. In the era of the 100,000-GPU cluster, the chip is no longer the unit of compute.
+            The chip is merely a node. <strong>The actual computer is the network.</strong></p>
+
+        <p>We are attempting to trick 72 distinct chips in a rack into "hallucinating" that they are a single brain. We
+            are fighting the speed of light, the resistance of copper, and the entropy of packet collisions. If the
+            network jitters by a microsecond, the entire cluster stalls.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-networking"></canvas>
+            <div class="caption">Fig 6. Packet Spraying: Ultra Ethernet vs Traditional ECMP</div>
+        </div>
+
+        <h3>Scale-Up: The Copper Sarcophagus</h3>
+        <p>Inside the rack, we use <strong>NVLink</strong>. This is "Scale-Up." The goal is to make 72 GPUs share memory
+            as if they were one. The bandwidth is insane: <strong>1.8 TB/s per GPU</strong> (28x faster than PCIe Gen
+            5).</p>
+
+        <p>To achieve this, NVIDIA builds a "Copper Sarcophagus"—a dense wall of cabling. Why copper? Because converting
+            electricity to light (optics) takes energy (~15pJ/bit). By keeping the chips close (inches apart), we can
+            drive the signal electrically. But we are hitting the <strong>Skin Effect</strong> limit. You can't run 224G
+            copper traces further than a meter.</p>
+
+        <h3>Scale-Out: The Rebellion of the Ethernet</h3>
+        <p>Once you leave the rack, you need optics. This is "Scale-Out." For years, InfiniBand was the only choice. But
+            now, the <strong>Ultra Ethernet Consortium (UEC)</strong> is fighting back.</p>
+
+        <p>The problem with standard Ethernet is that it is "lossy." If a packet drops, YouTube buffers. If a packet
+            drops in AI training, the entire supercomputer waits. The UEC fix is <strong>Packet Spraying</strong>.
+            Instead of sending a flow down one wire (where it might get stuck), the NIC chops the message into
+            "flowlets" and sprays them across <em>all</em> available paths. It guarantees load balancing and prevents
+            tail latency.</p>
+
+        <!-- GOOGLE -->
+        <h2>The Google Mesh: TPU v7 Ironwood & The Optical Loom</h2>
+
+        <p>If you walk into an NVIDIA H100 SuperPOD, you are assaulted by the sound of air. It is a hurricane of fans
+            screaming to cool the electrical switches. It is a violent, synchronous machine.</p>
+
+        <p>If you walk into a Google TPU v7 "Ironwood" pod, the vibe is unsettlingly different. It’s... quieter. While
+            NVIDIA builds the world’s fastest traffic system using <strong>Traffic Lights</strong> (Electrical Packet
+            Switches), Google builds a system using <strong>Mirrors</strong> (Optical Circuit Switches).</p>
+
+        <div class="viz-container">
+            <canvas id="viz-google"></canvas>
+            <div class="caption">Fig 7. The Optical Loom: Self-Healing with OCS Mirrors</div>
+        </div>
+
+        <h3>The Physics: Systolic Arrays & The Memory Wall</h3>
+        <p>The TPU v7 Ironwood is not a GPU. It is a <strong>Systolic Array</strong>. Data flows through the chip like
+            blood through a heart, reusing weights thousands of times. This makes it incredibly efficient for matrix
+            math (4.6 PFLOPS per chip). But it also makes it bandwidth-hungry. That's why Google put <strong>192GB of
+                HBM3e</strong> on every chip—to hold the massive KV Cache of trillion-parameter models.</p>
+
+        <h3>The Secret Weapon: Apollo OCS</h3>
+        <p>This is where the mirrors come in. The <strong>Optical Circuit Switch (OCS)</strong> uses MEMS mirrors
+            suspended in a vacuum. It consumes <strong>zero power</strong> to hold a connection. It doesn't convert
+            light to electricity; it just bounces it.</p>
+
+        <p>If a TPU fails, the OCS simply tilts a mirror. It creates a detour around the dead node in milliseconds. The
+            network "heals" itself. This allows Google to build "Planetary Scale Computers" where physical distance is
+            irrelevant. A TPU in Row 1 can talk to a TPU in Row 500 as if they were neighbors, stitched together by
+            light.</p>
+
+        <!-- TRAINIUM -->
+        <h2>The Utilitarian: Amazon Trainium & The Cost Curve</h2>
+
+        <p>If you stand next to an NVIDIA Blackwell rack, you feel the arrogance of the silicon. It is the Ferrari SF90
+            of compute. It screams "Oomph."</p>
+
+        <p>But walk into <strong>Project Rainier</strong>—AWS’s cluster in Oregon—and the vibe is different. It smells
+            like logistics. Here, 500,000 <strong>Trainium 2</strong> chips are humming. They are not Ferraris. They are
+            Toyota Camrys. They are boring, beige, and possessed of a singular competence.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-trainium"></canvas>
+            <div class="caption">Fig 8. The Cost Curve: Normalized to a 100,000 Unit Cluster</div>
+        </div>
+
+        <h3>The Physics: The Systolic Heartbeat</h3>
+        <p>Trainium 2 is a scalpel. It strips away the "General Purpose" baggage of a GPU. It has 8
+            <strong>NeuronCores</strong> (Systolic Arrays) and 96GB of HBM3e. It isn't faster than an H100. But it is
+            <strong>sufficient</strong>.
+        </p>
+
+        <h3>The Economics: The Equity Wash</h3>
+        <p>Why did Anthropic bet on Amazon? Because of the <strong>"Equity Wash."</strong> Amazon invested $8 billion in
+            Anthropic, but they didn't hand over cash. They handed over <em>compute credits</em>. Anthropic spends those
+            credits renting Trainium instances.</p>
+
+        <p>According to <strong>SemiAnalysis</strong>, this is not just an accounting trick; it is a fundamental
+            arbitrage.
+            Trainium 2 offers a <strong>~40-50% reduction in Total Cost of Ownership (TCO)</strong> compared to an
+            NVIDIA H100 cluster for training workloads.
+            The cost per billion tokens is estimated to be <strong>50-70% lower</strong>. While the H100 wins on raw
+            peak FLOPs, Trainium wins on "FLOPs per Dollar."
+            For a model training run that costs $100 Million on NVIDIA hardware, the bill on Trainium might be only $60
+            Million. That $40 Million difference is the margin that builds empires.</p>
+
+        <!-- INFERENCE -->
+        <h2>The Inference Shift: Why o1 Changes Hardware</h2>
+
+        <p>You know that feeling. You type a prompt into <strong>ChatGPT o1</strong>, and there is a pause. A silence.
+            The UI pulses "Thinking..." for 20 seconds.</p>
+
+        <p>To a user, this is latency. To a hardware engineer, this is terror. That pause is the sound of 100 kilowatts
+            of silicon screaming. The model is generating thousands of hidden "Chain of Thought" tokens. We are moving
+            from <strong>System 1</strong> (Reflex) to <strong>System 2</strong> (Reasoning).</p>
+
+        <h3>The Monster: KV Cache Explosion</h3>
+        <p>As o1 "thinks," it builds a massive context window. The <strong>KV Cache</strong> (Key-Value Cache) grows
+            linearly. For a 128k context window on Llama-3-405B, the cache is <strong>66GB per user</strong>. A B200 has
+            192GB of memory. You can fit 2 users. We are drowning in context.</p>
+        <p>Inference is <strong>Memory Bound</strong>. To generate one token, you must load the entire model (800GB)
+            from memory. If you generate tokens one by one (Batch Size 1), you are limited by bandwidth, not compute. A
+            B200 with 8 TB/s bandwidth can only generate ~10 tokens/second for a massive model, leaving its PetaFLOPS of
+            compute 99% idle.</p>
+
+        <h3>The Monster: KV Cache Explosion</h3>
+        <p>As o1 "thinks," it builds a massive context window. The <strong>KV Cache</strong> (Key-Value Cache) grows
+            linearly. For a 128k context window on Llama-3-405B, the cache is <strong>66GB per user</strong>. A B200 has
+            192GB of memory. You can fit 2 users. We are drowning in context.</p>
+
+        <!-- ORCHESTRA -->
+        <h2>The Orchestra: Pipeline & Tensor Parallelism</h2>
+
+        <p>Let’s be brutally honest: A single NVIDIA H100 GPU is a brick. It is a $30,000 brick that can crunch 4
+            PetaFLOPS, but for a frontier model like Llama-3-405B (which requires 800GB of memory), it is useless. You
+            can't even load the model.</p>
+
+        <p>To summon intelligence, we need a <strong>Superorganism</strong>. We need to stitch 24,000 GPUs into a single
+            hive mind. But physics hates us. The bandwidth drops from Terabytes/sec (inside the chip) to Gigabytes/sec
+            (between chips). This is the <strong>Interconnect Cliff</strong>.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-orchestra"></canvas>
+            <div class="caption">Fig 10. The Pipeline Bubble: Visualizing the Tragedy of Idle Time</div>
+        </div>
+
+        <h3>Tensor Parallelism (TP): The Hive Mind</h3>
+        <p>We slice the weight matrix itself across 8 GPUs. They all compute their slice simultaneously. But to get the
+            answer, they must sum their results <em>instantly</em>. This requires an <strong>All-Reduce</strong>
+            operation. This is why NVLink exists. If you try this over Ethernet, the latency kills you.</p>
+
+        <h3>Pipeline Parallelism (PP): The Assembly Line</h3>
+        <p>Between racks, we use Pipeline Parallelism. Node 1 holds Layers 1-10. Node 2 holds Layers 11-20. Data flows
+            like a river. But there is a tragedy: <strong>The Bubble</strong>.</p>
+
+        <p>When Node 1 is working, Node 2 is waiting. This idle time is burning cash. In a $1 Billion cluster, a 10%
+            bubble means you are setting $100 Million on fire. The goal of the "Orchestra" (the scheduler) is to fill
+            every microsecond with math.</p>
+
+        <!-- CONCLUSION -->
+        <h2>Conclusion: The Glass Floor</h2>
+
+        <p>We have traveled from the nanometer scale of an ASML mirror to the planetary scale of a Google datacenter. We
+            have seen how the physics of light, the resistance of copper, and the economics of yield curve define the
+            future of AI.</p>
+
+        <p>We are not building software anymore. We are building a machine that spans from the atom to the ocean. It is
+            a machine that turns electricity into intelligence. And the only thing stopping us is the <strong>Glass
+                Floor</strong>—the fundamental limits of thermodynamics and the speed of light.</p>
+
+        <p>But as we have seen with Blackwell, with the Optical Mesh, and with o1, we are finding ways to cheat. We are
+            bending the curve. The scream of the fans is getting louder, but the intelligence is getting brighter.</p>
+
+        <p>Welcome to the Compute Century.</p>
+
+        <div class="methodology">
+            <p><strong>Methodology & Assumptions:</strong></p>
+            <p>1. <strong>Cluster Comparisons:</strong> All comparisons (Fig 1, 8) assume a normalized <strong>100,000
+                    GPU cluster</strong>. Power figures include cooling (PUE 1.1).</p>
+            <p>2. <strong>TCO Data:</strong> Trainium cost advantage (~40-50%) is based on SemiAnalysis reports (2024)
+                comparing Trainium 2 vs H100 HGX for dense LLM training.</p>
+            <p>3. <strong>Physics:</strong> "Speed of Light" latency in Fig 6/7 refers to fiber optic transmission
+                (~200,000 km/s). SRAM latency (~0.5ns) vs HBM (~50ns) includes controller overhead.</p>
+            <p>4. <strong>Visualizations:</strong> Fig 3 (ASML) is a schematic representation of the anamorphic optical
+                path. Fig 6 (Networking) simplifies the UEC packet spraying algorithm for visual clarity.</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-col">
+            <div class="logo">Prognosis AI</div>
+            <p>Intelligence at the Thermodynamic Limit.</p>
+        </div>
+        <div class="footer-col">
+            <div class="footer-links">
+                <a href="#">About</a>
+                <a href="#">Research</a>
+                <a href="#">Twitter</a>
+            </div>
+            <input type="text" class="newsletter-input" placeholder="Enter email for updates">
+        </div>
+    </footer>
+
+    <script src="compute_viz.js"></script>
+    <script>
+        // Citation Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const citations = {
+                "1": "Epoch AI, 'Compute Trends Across Three Eras of Machine Learning', 2022.",
+                "2": "NVIDIA Architecture Whitepaper, 'Blackwell Architecture Technical Overview', 2024.",
+                "3": "ASML Annual Report 2023, 'EUV Lithography Systems'.",
+                "4": "Bill Dally, 'The Future of Computing', Hot Chips 2023.",
+                "5": "Google Cloud, 'TPU v4: An Optically Reconfigurable Supercomputer', ISCA 2023."
+            };
+
+            // Inject citations into text (Example injection for demo purposes, in real app would be manual)
+            // This is a helper to show the user the feature works.
+            const pTags = document.querySelectorAll('p');
+            if (pTags[5]) pTags[5].innerHTML += ' <span class="citation" data-id="1">[1]</span>';
+            if (pTags[12]) pTags[12].innerHTML += ' <span class="citation" data-id="2">[2]</span>';
+            if (pTags[18]) pTags[18].innerHTML += ' <span class="citation" data-id="3">[3]</span>';
+            if (pTags[28]) pTags[28].innerHTML += ' <span class="citation" data-id="4">[4]</span>';
+
+            const popover = document.createElement('div');
+            popover.className = 'popover';
+            document.body.appendChild(popover);
+
+            document.querySelectorAll('.citation').forEach(cit => {
+                cit.addEventListener('mouseenter', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    if (citations[id]) {
+                        popover.textContent = citations[id];
+                        popover.classList.add('visible');
+                        const rect = e.target.getBoundingClientRect();
+                        popover.style.left = (rect.left + window.scrollX - 150 + rect.width / 2) + 'px';
+                        popover.style.top = (rect.top + window.scrollY - popover.offsetHeight - 10) + 'px';
+                    }
+                });
+
+                cit.addEventListener('mouseleave', () => {
+                    popover.classList.remove('visible');
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

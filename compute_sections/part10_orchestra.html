@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Orchestra: Pipeline & Tensor Parallelism</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #9b59b6, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="orchestra">
+        <h1>The Orchestra: Pipeline & Tensor Parallelism</h1>
+        <p class="byline">PART 10: THE $30,000 PAPERWEIGHT</p>
+
+        <p>Let’s be brutally honest: A single NVIDIA H100 GPU is a brick. It is a $30,000 brick that can crunch 4
+            PetaFLOPS, but for a frontier model like Llama-3-405B (which requires 800GB of memory), it is useless. You
+            can't even load the model.</p>
+
+        <p>To summon intelligence, we need a <strong>Superorganism</strong>. We need to stitch 24,000 GPUs into a single
+            hive mind. But physics hates us. The bandwidth drops from Terabytes/sec (inside the chip) to Gigabytes/sec
+            (between chips). This is the <strong>Interconnect Cliff</strong>.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-orchestra"></canvas>
+            <div class="caption">Fig 10. The Pipeline Bubble: Visualizing the Tragedy of Idle Time</div>
+        </div>
+
+        <h3>Tensor Parallelism (TP): The Hive Mind</h3>
+        <p>We slice the weight matrix itself across 8 GPUs. They all compute their slice simultaneously. But to get the
+            answer, they must sum their results <em>instantly</em>. This requires an <strong>All-Reduce</strong>
+            operation. This is why NVLink exists. If you try this over Ethernet, the latency kills you.</p>
+
+        <h3>Pipeline Parallelism (PP): The Assembly Line</h3>
+        <p>Between racks, we use Pipeline Parallelism. Node 1 holds Layers 1-10. Node 2 holds Layers 11-20. Data flows
+            like a river. But there is a tragedy: <strong>The Bubble</strong>.</p>
+
+        <p>When Node 1 is working, Node 2 is waiting. This idle time is burning cash. In a $1 Billion cluster, a 10%
+            bubble means you are setting $100 Million on fire. The goal of the "Orchestra" (the scheduler) is to fill
+            every microsecond with math.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

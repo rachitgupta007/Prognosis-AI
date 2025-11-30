@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Utilitarian: Amazon Trainium & The Cost Curve</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #ff9900, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="trainium">
+        <h1>The Utilitarian: Amazon Trainium & The Cost Curve</h1>
+        <p class="byline">PART 8: FERRARI VS CAMRY</p>
+
+        <p>If you stand next to an NVIDIA Blackwell rack, you feel the arrogance of the silicon. It is the Ferrari SF90
+            of compute. It screams "Oomph."</p>
+
+        <p>But walk into <strong>Project Rainier</strong>—AWS’s cluster in Oregon—and the vibe is different. It smells
+            like logistics. Here, 500,000 <strong>Trainium 2</strong> chips are humming. They are not Ferraris. They are
+            Toyota Camrys. They are boring, beige, and possessed of a singular competence.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-trainium"></canvas>
+            <div class="caption">Fig 8. The Cost Curve: When the "Jank Tax" Pays Off</div>
+        </div>
+
+        <h3>The Physics: The Systolic Heartbeat</h3>
+        <p>Trainium 2 is a scalpel. It strips away the "General Purpose" baggage of a GPU. It has 8
+            <strong>NeuronCores</strong> (Systolic Arrays) and 96GB of HBM3e. It isn't faster than an H100. But it is
+            <strong>sufficient</strong>.</p>
+
+        <h3>The Economics: The Equity Wash</h3>
+        <p>Why did Anthropic bet on Amazon? Because of the <strong>"Equity Wash."</strong> Amazon invested $8 billion in
+            Anthropic, but they didn't hand over cash. They handed over <em>compute credits</em>. Anthropic spends those
+            credits renting Trainium instances. Amazon's marginal cost to run those instances is low. Effectively,
+            Amazon bought equity for the cost of electricity.</p>
+
+        <h3>The Software: The "Jank" Moat</h3>
+        <p>Why hasn't everyone switched? Because the software (Neuron SDK) is hard. It hates dynamic shapes. It hates
+            chaos. To use it, you need a team of engineers to write kernel-level code. For a startup, this is a
+            nightmare. For Anthropic, it is a moat. They pay the "Jank Tax" upfront to unlock massive long-term savings.
+        </p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

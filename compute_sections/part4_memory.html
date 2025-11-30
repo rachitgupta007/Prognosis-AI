@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Memory Wall: HBM3e & The Bandwidth Crisis</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #f39c12, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        ul {
+            margin-bottom: 1.5rem;
+            color: #ccc;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        blockquote {
+            border-left: 4px solid #f39c12;
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="memory">
+        <h1>The Memory Wall: HBM3e & The Bandwidth Crisis</h1>
+        <p class="byline">PART 4: THE FUSION REACTOR AND THE COFFEE STIRRER</p>
+
+        <p>Let’s start with a visceral image. You have built a fusion reactor in your basement. It burns with the heat
+            of a thousand suns. It is a masterpiece of high-energy physics. It craves fuel. But instead of a
+            high-pressure plasma injection line, you are feeding it deuterium through a plastic coffee stirrer.</p>
+
+        <p>This is the state of AI hardware in late 2025. We have built computational gods. The <strong>NVIDIA
+                B200</strong> is a silicon leviathan capable of PetaFLOPS of compute. But for 40% of its operational
+            life, this god is asleep. It is starving. It is waiting for data to arrive from a memory bank a few
+            millimeters away.</p>
+
+        <p>We have scaled compute by <strong>1000x</strong> in the last decade, but the pipe that feeds it—memory
+            bandwidth—has only grown by <strong>100x</strong>. This is the <strong>Memory Wall</strong>.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-memory"></canvas>
+            <div class="caption">Fig 4. The Traffic Jam: HBM Bandwidth vs Compute Throughput</div>
+        </div>
+
+        <h3>The Physics: Drilling Holes in Sand</h3>
+        <p>To understand the solution, we have to look at the First Principles of moving electrons. The energy required
+            to drive a signal across a wire is proportional to capacitance ($C$) and distance:</p>
+
+        <blockquote>$$ E \approx \frac{1}{2} C V^2 $$</blockquote>
+
+        <p>If you move data 50mm across a PCB, you are fighting massive capacitance. You have to shout to be heard. This
+            burns power. The solution is <strong>Verticality</strong>. We don't wire memory around the edges; we drill
+            holes <em>through</em> the silicon itself. These are <strong>Through-Silicon Vias (TSVs)</strong>.</p>
+
+        <p>A single HBM3e stack has over <strong>1,024 TSVs</strong>. By going vertical, we shorten the wire length from
+            centimeters to micrometers. This allows a single stack to deliver <strong>1.2 TB/s</strong>. The Blackwell
+            GPU uses eight of them.</p>
+
+        <h3>The "Bill Dally Tax"</h3>
+        <p>Why do we pay the insane premium for HBM? Because arithmetic is free, but communication is expensive. NVIDIA
+            Chief Scientist Bill Dally quantified this:</p>
+        <ul>
+            <li><strong>Doing a Float16 Multiply:</strong> ~0.1 picoJoules (pJ)</li>
+            <li><strong>Reading from HBM:</strong> ~50 pJ</li>
+            <li><strong>Reading from Off-Chip DDR:</strong> ~500 pJ</li>
+        </ul>
+
+        <p>Data movement costs <strong>500x</strong> more than compute. If you write a sloppy kernel that moves data
+            unnecessarily, you are effectively paying FedEx to ship a package across the country just to open it and
+            close it immediately.</p>
+
+        <h3>The Yield Crisis: Tower of Hanoi</h3>
+        <p>Manufacturing HBM is a nightmare. To stack 12 dies (12-Hi), you have to grind wafers down to 30
+            microns—thinner than a human hair. Silicon at this thickness acts like Saran wrap. The yield loss is
+            exponential. If each bond has a 99% yield, a 12-layer stack has a yield of $0.99^{11} \approx 89\%$. In
+            reality, early yields were closer to 50%. You are paying for the silicon graveyard of failed stacks.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>

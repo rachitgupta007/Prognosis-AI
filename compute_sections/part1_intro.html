@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Thermodynamics of the Scream</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .byline {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 3rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .highlight {
+            color: #4cc9f0;
+        }
+
+        .viz-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        canvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+        }
+
+        .caption {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        blockquote {
+            border-left: 4px solid #4cc9f0;
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section id="intro">
+        <h1>The Thermodynamics of the Scream</h1>
+        <p class="byline">PART 1: THE OOMPH OF SCALE</p>
+
+        <p>There is a specific sound a data center makes when it pushes past the Gigawatt threshold. It is not the "hum"
+            of the early internet, which sounded like a library refrigerator. It is a <strong>scream</strong>.</p>
+
+        <p>If you stand next to a modern <strong>NVIDIA GB200 NVL72</strong> rack, you are standing next to a
+            thermodynamic event. This single rack—a black monolith of 72 Blackwell GPUs and 36 Grace CPUs—consumes
+            <strong>120 to 140 kilowatts</strong> of power depending on the workload. Let’s pause and feel the "oomph"
+            of that number.</p>
+
+        <p>A typical American home draws 1.2 kW on average. A human brain runs on ~20 watts. This single rack, occupying
+            a mere 2x4 floor tile, draws as much power as <strong>100 homes</strong> or <strong>6,000 human
+                brains</strong>. It pumps out heat with the intensity of a small volcanic vent. The heat flux density on
+            the B200 die—pushing 1,000 watts through an 800mm² reticle—is approximately <strong>1.25 MW/m²</strong>. For
+            reference, the heat flux at the surface of a nuclear fuel rod in a pressurized light water reactor is about
+            <strong>1 MW/m²</strong>.</p>
+
+        <p>We have effectively trapped a localized nuclear event inside a server cabinet, multiplied it by ten thousand,
+            and taught it to speak English.</p>
+
+        <div class="viz-container">
+            <canvas id="viz-oomph"></canvas>
+            <div class="caption">Fig 1. The Ladder of Oomph: From Biology to Geology (Log Scale)</div>
+        </div>
+
+        <h3>From Industrial to Geological</h3>
+        <p>If you were to touch the coolant loop (don't), you wouldn't feel warm water. You would feel the waste heat of
+            a synthetic star. We are no longer building "computers" in the sense of the beige boxes that sat on desks in
+            the 1990s. We are building synthetic organisms that eat gigawatts. We are moving from <strong>Industrial
+                Scale</strong> (factories, warehouses, logistics) to <strong>Geological Scale</strong> (tectonic plates,
+            rivers, aquifers).</p>
+
+        <p>The core thesis of this essay is simple but terrifying: <strong>The unit of AI progress is no longer the
+                "Idea." It is the Joule.</strong></p>
+
+        <h3>The Scaling Hypothesis</h3>
+        <p>Why does "Oomph" matter? Because we hit the wall. For forty years, Moore's Law was the dominant force in
+            human progress. It was a story about shrinking. We made the transistor smaller, so the electrons had less
+            distance to travel, so they got faster and cheaper. But around 2020, physics filed a restraining order.</p>
+
+        <p>We are now driven by the <strong>Scaling Hypothesis</strong>. As formalized by Gwern Branwen and empirically
+            verified by Epoch AI, the performance of a model ($L$) is a power-law function of the compute used to train
+            it ($C$):</p>
+
+        <blockquote>$$ L(C) \propto C^{-\alpha} $$</blockquote>
+
+        <p>This equation is the most expensive mathematical expression in human history. It says that if you want a
+            smarter model—one that can solve the Navier-Stokes equations, or route global logistics, or write a better
+            essay than this one—you simply need to pour more Joules into the furnace.</p>
+
+        <p>The rumors surrounding the Microsoft/OpenAI "Stargate" project cite a power requirement of <strong>5
+                Gigawatts (GW)</strong> by 2028. Let's contextualize 5GW:</p>
+        <ul>
+            <li><strong>The Hoover Dam:</strong> Generates ~2 GW.</li>
+            <li><strong>Palo Verde Nuclear Station:</strong> Generates ~3.3 GW.</li>
+            <li><strong>Stargate:</strong> Demands 5 GW.</li>
+        </ul>
+
+        <p>We are talking about a single facility that consumes more power than the largest nuclear power plant in the
+            United States. This is why Microsoft is signing deals with Constellation Energy to restart Three Mile
+            Island. They aren't just buying electricity; they are buying the <em>means of production</em> of
+            electricity.</p>
+    </section>
+
+    <script src="../compute_viz.js"></script>
+</body>
+
+</html>
