@@ -59,6 +59,7 @@
         .animate-enter {
             animation: fadeInUp 0.8s var(--easing-sharp) forwards;
             opacity: 0;
+            animation-play-state: paused;
         }
 
         .delay-1 {
@@ -565,10 +566,6 @@
     <nav>
         <div class="nav-left">
             <a href="index.html" class="logo t-tight">PROGNOSIS</a>
-            <div class="nav-status mono caps">
-                <div class="status-dot"></div>
-                Live Model Inference
-            </div>
         </div>
         <div class="nav-links">
             <a href="index.html" class="active">Trends</a>
@@ -730,52 +727,52 @@
             reset() {
                 this.x = 0;
                 this.y = h * 0.7 + (Math.random() * h * 0.1); // Start range
-                this.points = [{x: this.x, y: this.y}];
+                this.points = [{ x: this.x, y: this.y }];
                 this.active = true;
-                
+
                 // Personality
                 this.isAggressive = Math.random() > 0.8; // 20% are aggressive breakouts
                 this.volatility = 0.5 + Math.random();
                 this.trend = -0.5 - Math.random() * 0.5; // Upward trend (negative y)
-                
-                if(this.isAggressive) {
+
+                if (this.isAggressive) {
                     this.trend *= 1.5;
                     this.volatility *= 2;
                 }
-                
+
                 this.color = this.isAggressive ? '#D64000' : '#4A4D4B';
                 this.width = this.isAggressive ? 1.5 : 0.8;
                 this.alpha = this.isAggressive ? 0.8 : 0.15;
             }
-            
+
             update(speed) {
                 if (!this.active) return;
-                
+
                 this.x += speed;
-                
+
                 // Random Walk with Drift
                 let change = this.trend + (Math.random() - 0.5) * this.volatility * 5;
-                
+
                 // "Shocks" - sudden jumps
                 if (Math.random() < 0.01) change += (Math.random() - 0.5) * 20;
-                
+
                 this.y += change;
-                
+
                 // Bounds
                 if (this.y < 0) this.y = 0;
                 if (this.y > h) this.y = h;
 
-                this.points.push({x: this.x, y: this.y});
-                
+                this.points.push({ x: this.x, y: this.y });
+
                 if (this.x > w) this.active = false;
             }
-            
+
             draw() {
                 ctx.beginPath();
                 ctx.strokeStyle = this.color;
                 ctx.lineWidth = this.width;
                 ctx.globalAlpha = this.alpha;
-                
+
                 if (this.points.length > 1) {
                     ctx.moveTo(this.points[0].x, this.points[0].y);
                     for (let i = 1; i < this.points.length; i++) {
@@ -788,7 +785,7 @@
         }
 
         // Initialize
-        for(let i=0; i<NUM_PATHS; i++) paths.push(new Path());
+        for (let i = 0; i < NUM_PATHS; i++) paths.push(new Path());
 
         // Active Traversal Head
         let headX = 0;
@@ -798,7 +795,7 @@
             ctx.clearRect(0, 0, w, h);
             drawGrid();
             drawLabels();
-            
+
             // Update paths
             let anyActive = false;
             paths.forEach(p => {
@@ -808,9 +805,9 @@
                 p.draw();
                 if (p.active) anyActive = true;
             });
-            
+
             headX += speed;
-            
+
             // Draw "Current Time" Line
             if (headX < w) {
                 ctx.beginPath();
@@ -821,13 +818,13 @@
                 ctx.lineTo(headX, h);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                
+
                 // Glowing Head
                 ctx.fillStyle = '#D64000';
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = '#D64000';
                 ctx.beginPath();
-                ctx.arc(headX, paths[0].y, 4, 0, Math.PI*2); // Attach to one path arbitrarily for visual anchor
+                ctx.arc(headX, paths[0].y, 4, 0, Math.PI * 2); // Attach to one path arbitrarily for visual anchor
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -845,12 +842,12 @@
             ctx.strokeStyle = '#E5E2D9';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            for(let i = 1; i < 5; i++) {
-                const xPos = (w/5) * i;
+            for (let i = 1; i < 5; i++) {
+                const xPos = (w / 5) * i;
                 ctx.moveTo(xPos, 0); ctx.lineTo(xPos, h);
             }
-            for(let i = 1; i < 5; i++) {
-                const yPos = (h/5) * i;
+            for (let i = 1; i < 5; i++) {
+                const yPos = (h / 5) * i;
                 ctx.moveTo(0, yPos); ctx.lineTo(w, yPos);
             }
             ctx.stroke();
@@ -859,20 +856,20 @@
         function drawLabels() {
             ctx.fillStyle = '#4A4D4B';
             ctx.font = '10px "JetBrains Mono"';
-            
+
             // X Axis
             const years = [2025, 2030, 2035, 2040, 2045];
             ctx.textAlign = 'center';
-            for(let i = 0; i < 5; i++) {
-                const xPos = (w/5) * i;
+            for (let i = 0; i < 5; i++) {
+                const xPos = (w / 5) * i;
                 if (i > 0) ctx.fillText(years[i], xPos, h - 10);
             }
 
             // Y Axis
             ctx.textAlign = 'left';
-            ctx.fillText("30TW", 10, h*0.1);
-            ctx.fillText("20TW", 10, h*0.4);
-            ctx.fillText("10TW", 10, h*0.7);
+            ctx.fillText("30TW", 10, h * 0.1);
+            ctx.fillText("20TW", 10, h * 0.4);
+            ctx.fillText("10TW", 10, h * 0.7);
         }
 
         // Observer for scroll animations
@@ -891,7 +888,7 @@
             paths.forEach(p => p.reset());
             headX = 0;
         });
-        
+
         setTimeout(() => {
             resize();
             animate();
