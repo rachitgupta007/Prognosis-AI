@@ -197,59 +197,13 @@
             background: var(--c-accent);
         }
 
-        /* Ticker */
-        .ticker-wrap {
-            position: fixed;
-            top: 70px;
-            /* Below nav */
-            left: 0;
-            width: 100%;
-            background: var(--c-ink);
-            color: var(--c-paper);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            padding: 0.5rem 0;
-            z-index: 99;
-            overflow: hidden;
-            white-space: nowrap;
-            border-bottom: 1px solid var(--c-accent);
-        }
-
-        .ticker {
-            display: inline-block;
-            animation: ticker 30s linear infinite;
-        }
-
-        .ticker-item {
-            display: inline-block;
-            padding: 0 2rem;
-        }
-
-        .ticker-item span {
-            color: var(--c-accent);
-        }
-
-        @keyframes ticker {
-            0% {
-                transform: translateX(100%);
-            }
-
-            100% {
-                transform: translateX(-100%);
-            }
-        }
-
         /* HERO */
         #hero {
             min-height: 95vh;
             padding-top: 73px;
             display: grid;
-            grid-template-columns: 55% 45%;
-            /* Adjusted */
-            height: 80vh;
+            grid-template-columns: 65% 35%;
             border-bottom: 1px solid var(--c-ink);
-            position: relative;
-            overflow: hidden;
         }
 
         .hero-viz {
@@ -279,27 +233,18 @@
         }
 
         .hero-content {
-            padding: 6rem;
+            padding: 4rem 3rem;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            border-right: 1px solid var(--c-ink);
-            background: rgba(245, 242, 235, 0.8);
-            /* Slight transparency */
-            backdrop-filter: blur(10px);
-            z-index: 2;
+            justify-content: flex-end;
         }
 
         h1 {
-            font-family: 'Newsreader', serif;
-            font-size: clamp(3rem, 5vw, 5rem);
-            /* Reduced max size */
+            font-size: clamp(3rem, 5vw, 5.5rem);
             font-weight: 400;
-            line-height: 1.1;
+            line-height: 1;
             margin-bottom: 2rem;
-            letter-spacing: -0.02em;
-            font-feature-settings: "kern" on, "liga" on, "dlig" on;
-            /* Advanced typography */
+            letter-spacing: -0.03em;
             text-indent: -0.05em;
         }
 
@@ -633,18 +578,6 @@
         </div>
     </nav>
 
-    <!-- Ticker -->
-    <div class="ticker-wrap">
-        <div class="ticker">
-            <div class="ticker-item">LIVE INFERENCE COST: <span>$0.0004/1k tok</span></div>
-            <div class="ticker-item">GLOBAL COMPUTE: <span>4.2 ZettaFLOPS</span></div>
-            <div class="ticker-item">ENERGY CONSUMPTION: <span>142 TWh</span></div>
-            <div class="ticker-item">MODEL COUNT: <span>14,203</span></div>
-            <div class="ticker-item">LATEST PAPER: <span>"Recursive Self-Improvement Thresholds" (Nov 2024)</span>
-            </div>
-        </div>
-    </div>
-
     <main>
         <section id="hero">
             <div class="hero-viz">
@@ -667,22 +600,22 @@
         <section id="metrics">
             <div class="metric-card animate-enter delay-1">
                 <div class="m-label">Estimated Training FLOPs (2025)</div>
-                <div class="m-val metric-value" data-target="5.2" data-suffix="e26">0e26</div>
+                <div class="m-val">5.2e26</div>
                 <div class="m-delta pos mono">↑ 1 Order of Magnitude YoY</div>
             </div>
             <div class="metric-card animate-enter delay-2">
                 <div class="m-label">Algorithmic Efficiency Halving</div>
-                <div class="m-val metric-value" data-target="8.4" data-suffix=" mo">0 mo</div>
+                <div class="m-val">8.4 mo</div>
                 <div class="m-delta mono">Pace increasing rapidly</div>
             </div>
             <div class="metric-card animate-enter delay-3">
                 <div class="m-label">Compute Investment (Annual)</div>
-                <div class="m-val metric-value" data-target="85" data-suffix="B">$0B</div>
+                <div class="m-val">$85B</div>
                 <div class="m-delta pos mono">↑ 300% since 2022</div>
             </div>
             <div class="metric-card animate-enter delay-1" style="background: #1A1C1B; color: #F2F0E6;">
                 <div class="m-label" style="color: var(--c-accent);">TAI Median Forecast</div>
-                <div class="m-val metric-value" data-target="2032" data-suffix="">0</div>
+                <div class="m-val">2032</div>
                 <div class="m-delta mono" style="opacity: 0.7;">Confidence Interval: [2029, 2045]</div>
             </div>
         </section>
@@ -797,52 +730,52 @@
             reset() {
                 this.x = 0;
                 this.y = h * 0.7 + (Math.random() * h * 0.1); // Start range
-                this.points = [{ x: this.x, y: this.y }];
+                this.points = [{x: this.x, y: this.y}];
                 this.active = true;
-
+                
                 // Personality
                 this.isAggressive = Math.random() > 0.8; // 20% are aggressive breakouts
                 this.volatility = 0.5 + Math.random();
                 this.trend = -0.5 - Math.random() * 0.5; // Upward trend (negative y)
-
-                if (this.isAggressive) {
+                
+                if(this.isAggressive) {
                     this.trend *= 1.5;
                     this.volatility *= 2;
                 }
-
+                
                 this.color = this.isAggressive ? '#D64000' : '#4A4D4B';
                 this.width = this.isAggressive ? 1.5 : 0.8;
                 this.alpha = this.isAggressive ? 0.8 : 0.15;
             }
-
+            
             update(speed) {
                 if (!this.active) return;
-
+                
                 this.x += speed;
-
+                
                 // Random Walk with Drift
                 let change = this.trend + (Math.random() - 0.5) * this.volatility * 5;
-
+                
                 // "Shocks" - sudden jumps
                 if (Math.random() < 0.01) change += (Math.random() - 0.5) * 20;
-
+                
                 this.y += change;
-
+                
                 // Bounds
                 if (this.y < 0) this.y = 0;
                 if (this.y > h) this.y = h;
 
-                this.points.push({ x: this.x, y: this.y });
-
+                this.points.push({x: this.x, y: this.y});
+                
                 if (this.x > w) this.active = false;
             }
-
+            
             draw() {
                 ctx.beginPath();
                 ctx.strokeStyle = this.color;
                 ctx.lineWidth = this.width;
                 ctx.globalAlpha = this.alpha;
-
+                
                 if (this.points.length > 1) {
                     ctx.moveTo(this.points[0].x, this.points[0].y);
                     for (let i = 1; i < this.points.length; i++) {
@@ -855,7 +788,7 @@
         }
 
         // Initialize
-        for (let i = 0; i < NUM_PATHS; i++) paths.push(new Path());
+        for(let i=0; i<NUM_PATHS; i++) paths.push(new Path());
 
         // Active Traversal Head
         let headX = 0;
@@ -865,7 +798,7 @@
             ctx.clearRect(0, 0, w, h);
             drawGrid();
             drawLabels();
-
+            
             // Update paths
             let anyActive = false;
             paths.forEach(p => {
@@ -875,9 +808,9 @@
                 p.draw();
                 if (p.active) anyActive = true;
             });
-
+            
             headX += speed;
-
+            
             // Draw "Current Time" Line
             if (headX < w) {
                 ctx.beginPath();
@@ -888,13 +821,13 @@
                 ctx.lineTo(headX, h);
                 ctx.stroke();
                 ctx.setLineDash([]);
-
+                
                 // Glowing Head
                 ctx.fillStyle = '#D64000';
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = '#D64000';
                 ctx.beginPath();
-                ctx.arc(headX, paths[0].y, 4, 0, Math.PI * 2); // Attach to one path arbitrarily for visual anchor
+                ctx.arc(headX, paths[0].y, 4, 0, Math.PI*2); // Attach to one path arbitrarily for visual anchor
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -912,12 +845,12 @@
             ctx.strokeStyle = '#E5E2D9';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            for (let i = 1; i < 5; i++) {
-                const xPos = (w / 5) * i;
+            for(let i = 1; i < 5; i++) {
+                const xPos = (w/5) * i;
                 ctx.moveTo(xPos, 0); ctx.lineTo(xPos, h);
             }
-            for (let i = 1; i < 5; i++) {
-                const yPos = (h / 5) * i;
+            for(let i = 1; i < 5; i++) {
+                const yPos = (h/5) * i;
                 ctx.moveTo(0, yPos); ctx.lineTo(w, yPos);
             }
             ctx.stroke();
@@ -926,20 +859,20 @@
         function drawLabels() {
             ctx.fillStyle = '#4A4D4B';
             ctx.font = '10px "JetBrains Mono"';
-
+            
             // X Axis
             const years = [2025, 2030, 2035, 2040, 2045];
             ctx.textAlign = 'center';
-            for (let i = 0; i < 5; i++) {
-                const xPos = (w / 5) * i;
+            for(let i = 0; i < 5; i++) {
+                const xPos = (w/5) * i;
                 if (i > 0) ctx.fillText(years[i], xPos, h - 10);
             }
 
             // Y Axis
             ctx.textAlign = 'left';
-            ctx.fillText("30TW", 10, h * 0.1);
-            ctx.fillText("20TW", 10, h * 0.4);
-            ctx.fillText("10TW", 10, h * 0.7);
+            ctx.fillText("30TW", 10, h*0.1);
+            ctx.fillText("20TW", 10, h*0.4);
+            ctx.fillText("10TW", 10, h*0.7);
         }
 
         // Observer for scroll animations
@@ -958,7 +891,7 @@
             paths.forEach(p => p.reset());
             headX = 0;
         });
-
+        
         setTimeout(() => {
             resize();
             animate();
