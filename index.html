@@ -865,6 +865,7 @@
 
         setTimeout(() => {
             resize();
+            paths.forEach(p => p.reset());
             animate();
         }, 100);
     </script>
