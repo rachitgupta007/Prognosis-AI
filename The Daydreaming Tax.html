@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Daydreaming Tax: Why AI Can't Invent (Yet) - Rachit Gupta</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+
+    <!-- MathJax -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            /* --- THEME: PAPER & INK --- */
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #545856;
+            --c-accent: #D64000;    /* Burnt Orange */
+            --c-blue: #2A6F97;      /* Muted Blue */
+            --c-grid: #D1CEC4;
+            --c-surface: #FCFBF9;
+            --c-code-bg: #E8E6DA;
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --max-width: 760px;
+            --easing: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .anim { animation: fadeUp 1s var(--easing) forwards; opacity: 0; }
+        .d-1 { animation-delay: 0.1s; }
+        .d-2 { animation-delay: 0.2s; }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.2rem 2rem;
+            background: rgba(242, 240, 230, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .logo { font-family: var(--f-mono); font-weight: 700; font-size: 0.8rem; letter-spacing: -0.02em; }
+        .nav-links a {
+            font-family: var(--f-mono); font-size: 0.75rem; text-transform: uppercase;
+            margin-left: 2rem; text-decoration: none; color: var(--c-ink-soft);
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--c-accent); }
+
+        /* --- LAYOUT --- */
+        main { max-width: var(--max-width); margin: 0 auto; padding: 180px 24px 120px; }
+
+        header { margin-bottom: 6rem; }
+        h1 {
+            font-size: 3.5rem; font-weight: 700; line-height: 1.05; letter-spacing: -0.03em;
+            margin-bottom: 1.5rem; color: var(--c-ink);
+        }
+        .meta {
+            font-family: var(--f-mono); font-size: 0.8rem; color: var(--c-ink-soft);
+            display: flex; gap: 2rem; border-top: 1px solid var(--c-ink); padding-top: 1.2rem;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h2 {
+            font-size: 2rem; font-weight: 600; letter-spacing: -0.02em;
+            margin: 4.5rem 0 1.5rem; padding-top: 2rem; border-top: 1px solid var(--c-grid);
+        }
+        h3 {
+            font-family: var(--f-mono); font-size: 0.9rem; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--c-ink-soft); margin: 2.5rem 0 1rem; font-weight: 600;
+        }
+        p { margin-bottom: 1.8rem; text-align: justify; hyphens: auto; }
+        strong { font-weight: 650; color: #000; }
+        
+        a.ref {
+            color: inherit; text-decoration: none; border-bottom: 1px solid var(--c-grid);
+            transition: all 0.2s; cursor: pointer; position: relative;
+        }
+        a.ref:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+        /* --- CODE --- */
+        pre {
+            background: var(--c-code-bg) !important; border: 1px solid var(--c-grid);
+            border-radius: 4px; padding: 1.5rem !important; margin: 3rem -3rem !important;
+            overflow-x: auto; font-size: 0.85rem !important; font-family: var(--f-mono) !important;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.02);
+        }
+        code { font-family: var(--f-mono) !important; color: var(--c-ink) !important; text-shadow: none !important; }
+        @media (max-width: 800px) { pre { margin: 2rem 0 !important; } }
+
+        /* --- VISUALIZATIONS --- */
+        .viz-box {
+            margin: 5rem -4rem; background: var(--c-surface);
+            border: 1px solid var(--c-grid); padding: 24px;
+            border-radius: 4px; box-shadow: 12px 12px 0 rgba(0,0,0,0.03);
+            position: relative;
+        }
+        @media (max-width: 900px) { .viz-box { margin: 3rem 0; } }
+
+        .viz-head {
+            display: flex; justify-content: space-between; align-items: baseline;
+            border-bottom: 1px dashed var(--c-grid); padding-bottom: 12px; margin-bottom: 16px;
+            font-family: var(--f-mono); font-size: 0.75rem; color: var(--c-ink-soft); text-transform: uppercase;
+        }
+
+        canvas { width: 100%; height: 400px; display: block; background: var(--c-paper); cursor: crosshair; }
+
+        .viz-ui {
+            display: flex; justify-content: center; gap: 12px; margin-top: 20px;
+            font-family: var(--f-mono); font-size: 0.8rem; flex-wrap: wrap; align-items: center;
+        }
+        
+        button.btn-ui {
+            background: transparent; border: 1px solid var(--c-grid); padding: 8px 16px;
+            font-family: inherit; font-size: inherit; cursor: pointer; color: var(--c-ink-soft);
+            transition: all 0.2s;
+        }
+        button.btn-ui:hover { border-color: var(--c-ink); color: var(--c-ink); }
+        button.btn-ui.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+
+        .viz-cap {
+            margin-top: 16px; font-size: 0.9rem; color: var(--c-ink-soft);
+            text-align: center; font-style: italic; max-width: 90%; margin-inline: auto; line-height: 1.4;
+        }
+
+        /* --- FOOTER & POPOVER --- */
+        footer {
+            margin-top: 8rem; padding: 4rem 0; border-top: 1px solid var(--c-grid);
+            display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 0.8rem;
+            color: var(--c-ink-soft);
+        }
+
+        .popover {
+            position: absolute; background: var(--c-ink); color: var(--c-paper);
+            padding: 12px 16px; border-radius: 4px; font-family: var(--f-mono); font-size: 0.75rem;
+            width: 260px; z-index: 2000; pointer-events: none; opacity: 0;
+            transform: translateY(10px); transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25); line-height: 1.4;
+        }
+        .popover.visible { opacity: 1; transform: translateY(0); }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RACHIT.GUPTA</div>
+        <div class="nav-links">
+            <a href="#">Essays</a>
+            <a href="#">Research</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <main>
+        <header class="anim">
+            <h1>The Daydreaming Tax: Why AI Can't Invent (Yet)</h1>
+            <div class="meta d-1">
+                <span>By Rachit Gupta</span>
+                <span>November 30, 2025</span>
+                <span>~30 min read</span>
+            </div>
+        </header>
+
+        <article class="anim d-2">
+            
+            <p>I have been spending an inordinate amount of time lately staring at loss curves. It has arguably become a form of digital meditation for me. You launch a training run on the cluster, you watch that jagged orange line descend on the dashboard, and you feel the subtle dopamine hit as the perplexity drops. The model is learning. It is becoming efficient. It is compressing the statistical regularities of the internet into a dense matrix of floating-point weights that can predict the next token with terrified accuracy.</p>
+
+            <p>But recently, as the loss approaches its asymptote, I have been obsessing over the inverse of that curve. I have been thinking about what we are <em>losing</em> as that line approaches zero.</p>
+
+            <p>There is a fundamental, mathematical tension in Artificial Intelligence right now—a tug-of-war that dictates the architecture of our systems yet is rarely discussed explicitly in the labs. It is the tension between <strong>Efficiency</strong> (Exploitation) and <strong>Creativity</strong> (Exploration). It is the conflict between the "most likely" token and the "breakthrough" idea. We want our models to be safe, reliable, and predictable. We want them to be efficient "Assembly Lines" of text generation. But simultaneously, we demand that they invent new physics, write poetry that pierces the soul, and solve problems that humans have been stuck on for centuries.</p>
+
+            <p>The mathematics of high-dimensional probability suggests you cannot have both.</p>
+
+            <p>To truly invent, you must waste time. You must traverse the low-probability paths. You must pay what the writer Gwern Branwen calls <a class="ref" data-cit="Branwen, G. 'The Daydreaming Tax'. Argues that biological evolution accepts the caloric cost of 'useless' thoughts (dreams, play) because they prevent overfitting.">The Daydreaming Tax</a>.</p>
+
+            <p>In this essay, I want to double-click on the mechanics of why Large Language Models (LLMs) are currently trapped in a "Probability Trap," the thermodynamics of sampling, and why the next great leap in AGI—moving from the <em>Age of Scaling</em> to the <em>Age of Reasoning</em>—will require us to build machines that sleep, dream, and wander off the path of optimization.</p>
+
+            <!-- SECTION 1 -->
+            <h2>1. The Thermodynamics of Mediocrity</h2>
+
+            <p>To understand why ChatGPT won’t write the next <em>Hamlet</em> by default, we have to look at the objective function that rules our lives: <strong>Cross-Entropy Loss</strong>.</p>
+
+            <p>At their core, these models are trained to minimize the negative log-likelihood of the ground truth data. Given a sequence of context tokens \( x_{<t} \), the model tries to predict the next token \( x_t \) that maximizes:</p>
+
+            $$ \mathcal{L}(\theta) = - \mathbb{E}_{x \sim P_{data}} \left[ \log P_\theta(x_t \mid x_{<t}) \right] $$
+
+            <p>The model is rewarded for being <em>correct</em>—for predicting the word that the average human (represented by the massive internet training corpus) would most likely use. The mechanism for this prediction is the <strong>Softmax</strong> layer. Given a vector of raw logits \( z \), the probability of the \( i \)-th token is:</p>
+
+            $$ P(x_i) = \frac{e^{z_i / T}}{\sum_{j} e^{z_j / T}} $$
+
+            <p>Here, \( T \) is the temperature. This equation is the gatekeeper of creativity.</p>
+
+            <h3>The Manifold of the Expected</h3>
+            <p>Innovation is, by definition, a low-probability event relative to the status quo. If I start a sentence with <em>"The theory of relativity was discovered by..."</em>, the high-probability completion is <em>"Albert Einstein."</em> That’s correct. It’s safe. It’s efficient. The probability \( P(\text{Einstein}) \) is likely 0.99.</p>
+
+            <p>However, if I am writing a speculative sci-fi novel where history took a divergent path, the "correct" next token might be <em>"a sentient toaster."</em> In the probability distribution of the training data, \( P(\text{Toaster}) \) is effectively zero (perhaps \( 10^{-9} \)).</p>
+
+            <p>When we use <strong>Greedy Decoding</strong> (picking the argmax) or even standard <strong>Nucleus Sampling</strong> (Top-P), we are effectively pruning the long tail. We are cutting off the weird, the unlikely, the novel. We are trapping the model in the <strong>Manifold of the Expected</strong>.</p>
+
+            <p>This leads to what I call <strong>"Beige Prose."</strong> You know this style. It is the <em>"In conclusion, it is important to consider various factors"</em> style of writing. It is grammatically flawless, structurally sound, and completely devoid of soul. In GANs, we call this <strong>Mode Collapse</strong>. In LLMs, it is a <strong>Style Collapse</strong>.</p>
+
+            <!-- VIZ 1 -->
+            <div class="viz-box">
+                <div class="viz-head">
+                    <span>Fig 1. Particle Sampling Simulator</span>
+                    <span id="v1-label" class="mono">T = 1.0</span>
+                </div>
+                <canvas id="c-trap"></canvas>
+                <div class="viz-ui">
+                    <span style="color:var(--c-ink-soft)">Temperature:</span>
+                    <input type="range" id="v1-slider" min="0.1" max="2.5" step="0.1" value="1.0" style="width:140px; accent-color: var(--c-ink);">
+                </div>
+                <div class="viz-cap">
+                    <strong>Physics of Sampling:</strong> Balls represent tokens being selected. At <strong>Low T</strong> (left), balls fall deterministically into the "Safe" bucket. At <strong>High T</strong> (right), the distribution flattens, allowing balls to land in the "Gem" bucket (Red)—but also in the noise.
+                </div>
+            </div>
+
+            <!-- SECTION 2 -->
+            <h2>2. The Assembly Line vs. The Artist's Studio</h2>
+
+            <p>This brings me to "The Bitter Lesson" by <strong>Rich Sutton</strong>. He argued that general methods leveraging computation (search and learning) eventually outperform human-crafted heuristics. We’ve learned that lesson for <strong>training</strong>. We poured massive compute into backpropagation to create these "ghosts"—these spirit-like entities that mimic the internet.</p>
+
+            <p>But as I discussed recently, we haven't applied <em>The Bitter Lesson</em> to <strong>inference</strong> yet.</p>
+
+            <p>Right now, an LLM inference pass is an <strong>Assembly Line</strong>:</p>
+            <ul class="mono" style="list-style: none; padding-left: 2rem; color: var(--c-ink-soft); font-size: 0.85rem; margin-bottom: 2rem;">
+                <li>> Input enters context window.</li>
+                <li>> Transformer layers process sequentially.</li>
+                <li>> Output token selected.</li>
+                <li>> Time: Constant O(1).</li>
+            </ul>
+
+            <p>This is efficient. It is also how you build a Toyota Corolla, not how you paint the <em>Mona Lisa</em>.</p>
+
+            <p><strong>Creativity is a Random Walk.</strong> It involves trying a path, hitting a dead end, backtracking, feeling frustrated, taking a nap, and then having an "Aha!" moment. It is inherently <strong>inefficient</strong>. It requires System 2 thinking—slow, deliberative, and iterative.</p>
+
+            <h3>The Metropolis-Hastings of Thought</h3>
+
+            <p>Mathematically, we can model creative search using the Metropolis-Hastings algorithm. An agent proposes a new thought \( x' \) from a distribution \( Q(x'|x) \). We accept this thought with probability \( A(x', x) \):</p>
+
+            $$ A(x', x) = \min \left( 1, \frac{P(x')}{P(x)} \frac{Q(x|x')}{Q(x'|x)} \right) $$
+
+            <p>Crucially, a creative agent must occasionally accept a state where \( P(x') < P(x) \). It must accept a "worse" idea (higher perplexity) to cross a valley in the optimization landscape.</p>
+
+            <!-- VIZ 2 -->
+            <div class="viz-box">
+                <div class="viz-head">
+                    <span>Fig 2. Search Dynamics</span>
+                    <span id="v2-mode-text">GREEDY</span>
+                </div>
+                <canvas id="c-land"></canvas>
+                <div class="viz-ui">
+                    <button class="btn-ui active" id="btn-greedy" onclick="setMode('greedy')">Greedy (Efficient)</button>
+                    <button class="btn-ui" id="btn-dream" onclick="setMode('dream')">Daydreaming (MCMC)</button>
+                </div>
+                <div class="viz-cap">
+                    <strong>Greedy (Blue):</strong> Climbs the nearest gradient immediately. Gets stuck in the "Cliché" (Local Optima).<br>
+                    <strong>Daydreaming (Orange):</strong> Uses Metropolis-Hastings sampling. It accepts "bad moves" (going downhill) with probability \( P \propto e^{\Delta E / T} \). This inefficiency allows it to traverse the valley and find the "Global Gem".
+                </div>
+            </div>
+
+            <!-- SECTION 3 -->
+            <h2>3. The Inference Scaling Laws</h2>
+
+            <p>We are witnessing the emergence of new scaling laws. For the last decade, we scaled parameters and data. Now, we are beginning to scale <strong>Inference Compute</strong>. Models like OpenAI's o1 are not just "predicting" tokens; they are "thinking" before they speak.</p>
+
+            <p>This "thinking" process is essentially a search algorithm over the space of potential completions. It generates thoughts, critiques them, backtracks, and generates again. This can be formalized as a <strong>Process Reward Model (PRM)</strong> guiding a Monte Carlo Tree Search.</p>
+
+            <pre><code class="language-python">def daydream_inference(prompt, compute_budget):
+    # The Daydreaming Loop
+    thoughts = []
+    
+    # Phase 1: High-Entropy Generation (The Dream)
+    # We pay the tax by generating many variations
+    for _ in range(compute_budget):
+        # Generate with high temperature (T=1.5) to access the Long Tail
+        thought = model.generate(prompt, temperature=1.5)
+        thoughts.append(thought)
+    
+    # Phase 2: Criticism (The Waking)
+    # Evaluate thoughts using a Process Reward Model (PRM)
+    scores = reward_model.evaluate(thoughts)
+    
+    # Phase 3: Selection (The Consolidation)
+    best_thought = thoughts[np.argmax(scores)]
+    return best_thought</code></pre>
+
+            <p>This is computationally expensive. You are throwing away 99% of your compute. But that 1% you keep? That’s the invention. This is effectively <strong>Rejection Sampling</strong> applied to creativity.</p>
+
+            <!-- SECTION 4 -->
+            <h2>4. The Tree of Thoughts</h2>
+
+            <p><strong>Ilya Sutskever</strong> has suggested that we are moving from the "Age of Scaling" to the "Age of Research" (better reasoning, self-play) <a class="ref" data-cit="Dwarkesh Patel Interview with Ilya Sutskever (2024). Ilya argues that future progress depends on 'System 2' reasoning.">[2]</a>.</p>
+
+            <p>Pre-training is merely "memorizing the universe." It creates a jagged intelligence—genius at physics, but fails to solve a simple reasoning puzzle because it cannot backtrack. It lacks the ability to simulate.</p>
+
+            <p>Just as AlphaGo did not play the most likely move predicted by its policy network (it performed Monte Carlo Tree Search to explore future outcomes), future LLMs will not output the most likely token. They will explore the "Tree of Thoughts."</p>
+
+            <!-- VIZ 3 -->
+            <div class="viz-box">
+                <div class="viz-head">
+                    <span>Fig 3. Tree Search Simulation</span>
+                </div>
+                <canvas id="c-tree"></canvas>
+                <div class="viz-ui">
+                    <button class="btn-ui" onclick="resetTree()">Reset Simulation</button>
+                </div>
+                <div class="viz-cap">
+                    Invention is not a straight line. It is a branching tree. Fading lines represent "wasted" compute (the tax) that led to dead ends. Dark lines represent the consolidated path to the solution. The <strong>GEM</strong> is the target.
+                </div>
+            </div>
+
+            <p>As visualized above, a "Daydreaming" model explores many fading branches. Most lead nowhere. These are the "hallucinations" we usually try to suppress. But in a reasoning loop, these hallucinations are necessary hypotheses. The system must explore them, evaluate them, and prune them, leaving only the dark, solid line of truth.</p>
+
+            <h2>Conclusion: Embracing the Mess</h2>
+
+            <p>The current paradigm of "One Token, One Forward Pass" is hitting a wall. We have scaled the model size (Parameters), but we haven't scaled the thinking time (Inference Compute). This is the equivalent of having a genius take a test but forcing them to answer every question instantly without thinking.</p>
+
+            <p>To bridge the gap between "imitating the internet" and "inventing the future," we need to embrace inefficiency. We need architectures that allow for spiral searching, backtracking, and dreaming.</p>
+
+            <p>Efficiency is the enemy of creativity. If we want AGI, we might just have to let it daydream.</p>
+
+            <p>Now, if you will excuse me, I am going to go take a nap and consolidate my weights.</p>
+        </article>
+
+        <footer>
+            <div class="footer-col">
+                <strong>Rachit Gupta</strong>
+                <br><span>Research Scientist & Engineer</span>
+            </div>
+            <div class="nav-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">Scholar</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- POPOVER -->
+    <div id="cit-pop" class="popover"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        // --- UTILS & COLORS ---
+        const C = { ink: '#1A1C1B', paper: '#F2F0E6', accent: '#D64000', blue: '#2A6F97', grid: '#D1CEC4' };
+
+        // --- CANVAS MANAGER ---
+        // Handles High-DPI and resizing robustly
+        const canvasMap = new Map();
+        
+        function initCanvas(id) {
+            const c = document.getElementById(id);
+            const ctx = c.getContext('2d');
+            const data = { c, ctx, setup: false };
+            canvasMap.set(id, data);
+            
+            const ro = new ResizeObserver(() => {
+                const r = c.getBoundingClientRect();
+                if(r.width === 0) return;
+                
+                const dpr = window.devicePixelRatio || 1;
+                c.width = Math.floor(r.width * dpr);
+                c.height = Math.floor(r.height * dpr);
+                ctx.scale(dpr, dpr);
+                data.w = r.width; 
+                data.h = r.height;
+            });
+            ro.observe(c);
+            return data;
+        }
+
+        /* --- VIZ 1: PARTICLES --- */
+        (function() {
+            const d = initCanvas('c-trap');
+            const slider = document.getElementById('v1-slider');
+            const label = document.getElementById('v1-label');
+            const logits = [8, 5, 3, 2, 1.5, 1, 0.5, 0.1, -1, -2];
+            let particles = [], buckets = new Array(10).fill(0);
+
+            class P {
+                constructor(t, w) {
+                    this.x = w/2 + (Math.random()-0.5)*20; this.y = 0;
+                    this.vx = (Math.random()-0.5)*5; this.vy = 0;
+                    this.t = t; this.dead = false;
+                }
+                update(w, h) {
+                    this.vy+=0.5; this.y+=this.vy; this.x+=this.vx;
+                    const bw = (w-40)/10; const tx = 20 + this.t*bw + bw/2;
+                    this.vx += (tx-this.x)*0.05; this.vx*=0.92;
+                    if(this.y > h-20) {
+                        this.dead = true;
+                        buckets[this.t] = Math.min(50, buckets[this.t]+1);
+                    }
+                }
+                draw(ctx) {
+                    ctx.beginPath(); ctx.fillStyle = this.t===9?C.accent:C.ink;
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI*2); ctx.fill();
+                }
+            }
+            setInterval(()=>{ buckets = buckets.map(b=>Math.max(0,b-1)); }, 100);
+
+            function loop() {
+                if(d.w) {
+                    const { ctx, w, h } = d;
+                    ctx.clearRect(0,0,w,h);
+                    
+                    const T = parseFloat(slider.value); 
+                    label.innerText = `T = ${T.toFixed(1)}`;
+                    
+                    const exps = logits.map(z=>Math.exp(z/T));
+                    const sum = exps.reduce((a,b)=>a+b,0);
+                    const probs = exps.map(e=>e/sum);
+
+                    if(Math.random()<0.35) {
+                        let r=Math.random(), s=0, idx=0;
+                        for(let i=0;i<probs.length;i++){ s+=probs[i]; if(r<=s){idx=i;break;} }
+                        particles.push(new P(idx, w));
+                    }
+
+                    const bw=(w-40)/10;
+                    for(let i=0;i<10;i++){
+                        const bh=(buckets[i]/50)*(h*0.6);
+                        const bx = 20+i*bw;
+                        ctx.fillStyle = i===9?C.accent:(i===0?C.blue:'#E0DED5');
+                        ctx.fillRect(bx+2, h-20-bh, bw-4, bh);
+                        if(i===0||i===9||probs[i]>0.1){
+                            ctx.fillStyle=C.ink; ctx.font='10px "JetBrains Mono"'; ctx.textAlign='center';
+                            ctx.fillText(i===9?"GEM":i===0?"SAFE":".", bx+bw/2, h-6);
+                        }
+                    }
+                    particles = particles.filter(p=>!p.dead);
+                    particles.forEach(p=>{ p.update(w,h); p.draw(ctx); });
+                }
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        /* --- VIZ 2: LANDSCAPE --- */
+        let mode = 'greedy';
+        window.setMode = (m) => {
+            mode = m;
+            document.getElementById('btn-greedy').className = m==='greedy'?'btn-ui active':'btn-ui';
+            document.getElementById('btn-dream').className = m==='dream'?'btn-ui active':'btn-ui';
+            document.getElementById('v2-mode-text').innerText = m.toUpperCase();
+            resetLand();
+        };
+        let agents = [];
+        function resetLand() { agents = [{x: 10, path: [], color: mode==='greedy'?C.blue:C.accent}]; }
+
+        (function() {
+            const d = initCanvas('c-land');
+            resetLand();
+            function Y(x) { 
+                const n=x/100; 
+                return 30 + Math.sin(n*10)*5 + Math.exp(-Math.pow((n-0.25)*10,2))*45 + Math.exp(-Math.pow((n-0.85)*12,2))*100; 
+            }
+
+            function loop() {
+                if(d.w) {
+                    const { ctx, w, h } = d;
+                    ctx.clearRect(0,0,w,h);
+                    
+                    ctx.beginPath();
+                    for(let i=0; i<=100; i+=0.5) {
+                        const y = h - (Y(i)/150)*h;
+                        i===0?ctx.moveTo((i/100)*w, y):ctx.lineTo((i/100)*w, y);
+                    }
+                    ctx.strokeStyle=C.grid; ctx.lineWidth=2; ctx.stroke();
+
+                    ctx.fillStyle=C.ink; ctx.font='10px "JetBrains Mono"'; 
+                    ctx.fillText("LOCAL MAX", w*0.25-30, h-(Y(25)/150)*h-10);
+                    ctx.fillStyle=C.accent; 
+                    ctx.fillText("GEM", w*0.85-10, h-(Y(85)/150)*h-10);
+
+                    agents.forEach(a => {
+                        const cy = Y(a.x);
+                        let nx = a.x;
+                        if(mode==='greedy') {
+                            if(Y(a.x+0.5)>cy) nx=a.x+0.5; else if(Y(a.x-0.5)>cy) nx=a.x-0.5;
+                        } else {
+                            const j=(Math.random()-0.45)*2.5; const cand=Math.max(0,Math.min(100,a.x+j));
+                            const diff=Y(cand)-cy;
+                            if(diff>0||Math.random()<Math.exp(diff/15)) nx=cand;
+                        }
+                        a.x=nx; a.path.push({x:a.x, y:Y(a.x)});
+                        if(a.path.length>200) a.path.shift();
+
+                        if(a.path.length>1) {
+                            ctx.beginPath();
+                            a.path.forEach((p,i)=>{
+                                const px=(p.x/100)*w, py=h-(p.y/150)*h;
+                                i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+                            });
+                            ctx.strokeStyle=a.color; ctx.lineWidth=2; ctx.stroke();
+                        }
+                        const hx=(a.x/100)*w, hy=h-(Y(a.x)/150)*h;
+                        ctx.beginPath(); ctx.arc(hx, hy, 4, 0, Math.PI*2);
+                        ctx.fillStyle=a.color; ctx.fill();
+                    });
+                }
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        /* --- VIZ 3: TREE SEARCH --- */
+        let treeReset = false;
+        window.resetTree = () => { treeReset = true; };
+
+        (function() {
+            const d = initCanvas('c-tree');
+            let branches = [];
+            
+            class Branch {
+                constructor(x, y, ang, type) {
+                    this.x = x; this.y = y; this.ang = ang; this.type = type;
+                    this.history = [{x,y}]; 
+                    this.alive = true; 
+                    this.life = 1.0;
+                }
+                update() {
+                    if(!this.alive) return;
+                    this.ang += (Math.random()-0.5)*0.2;
+                    if(this.type === 'main') this.ang += (0 - this.ang)*0.03; 
+                    
+                    this.x += Math.cos(this.ang)*2;
+                    this.y += Math.sin(this.ang)*2;
+                    this.history.push({x: this.x, y: this.y});
+
+                    if(this.type === 'waste') {
+                        this.life -= 0.01; 
+                        if(this.life <= 0) this.alive = false;
+                    }
+                }
+                draw(ctx) {
+                    if(this.history.length < 2) return;
+                    ctx.beginPath();
+                    let start = 0;
+                    if(this.type === 'main' && this.history.length > 500) start = this.history.length - 500;
+                    
+                    ctx.moveTo(this.history[start].x, this.history[start].y);
+                    for(let i=start+1; i<this.history.length; i++) ctx.lineTo(this.history[i].x, this.history[i].y);
+                    
+                    ctx.strokeStyle = this.type==='main' ? C.ink : C.grid;
+                    ctx.lineWidth = this.type==='main' ? 2 : 1;
+                    ctx.globalAlpha = Math.max(0, this.life);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+
+            function loop() {
+                if(d.w) {
+                    const { ctx, w, h } = d;
+
+                    if(treeReset || branches.length===0) {
+                        branches = [new Branch(0, h/2, 0, 'main')];
+                        treeReset = false;
+                        ctx.clearRect(0,0,w,h);
+                    }
+                    ctx.clearRect(0, 0, w, h);
+
+                    // Draw Target
+                    ctx.fillStyle = C.accent;
+                    ctx.beginPath(); ctx.arc(w-30, h/2, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = C.ink; ctx.font='10px "JetBrains Mono"'; ctx.textAlign='center';
+                    ctx.fillText("GEM", w-30, h/2+20);
+
+                    if(Math.random() < 0.2) {
+                        const parents = branches.filter(b => b.alive && b.history.length > 20);
+                        if(parents.length > 0 && branches.length < 60) {
+                            const p = parents[Math.floor(Math.random() * parents.length)];
+                            branches.push(new Branch(p.x, p.y, p.ang + (Math.random()-0.5)*1.5, 'waste'));
+                        }
+                    }
+
+                    const main = branches.find(b => b.type === 'main');
+                    if(main && main.x > w + 20) treeReset = true;
+
+                    branches = branches.filter(b => b.type === 'main' || b.life > 0);
+                    branches.forEach(b => { b.update(); b.draw(ctx); });
+                }
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        // Popover
+        const pop = document.getElementById('cit-pop');
+        document.querySelectorAll('.ref').forEach(el => {
+            el.addEventListener('mouseenter', e => {
+                pop.textContent = e.target.getAttribute('data-cit');
+                const r = e.target.getBoundingClientRect();
+                pop.style.top = (r.top + window.scrollY - 10) + 'px';
+                pop.style.left = (r.left + r.width/2) + 'px';
+                pop.style.transform = 'translate(-50%, -100%)';
+                pop.classList.add('visible');
+            });
+            el.addEventListener('mouseleave', () => pop.classList.remove('visible'));
+        });
+    </script>
+</body>
+</html>

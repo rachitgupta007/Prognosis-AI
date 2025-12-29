@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 1-Bit Revolution | Rachit Gupta</title>
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+
+    <!-- MathJax for LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
+
+    <style>
+        /* --- DESIGN SYSTEM ADHERENCE --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+            --max-width: 800px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px; /* Readable Academic Size */
+            line-height: 1.75;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-enter { animation: fadeInUp 0.8s var(--easing-sharp) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 3.2rem; font-weight: 800; line-height: 1.1; margin-bottom: 1rem; letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 2rem; margin-top: 4rem; margin-bottom: 1.5rem; font-weight: 700;
+            border-bottom: 1px solid var(--c-grid); padding-bottom: 0.5rem; letter-spacing: -0.01em;
+        }
+        h3 {
+            font-size: 1.4rem; margin-top: 2.5rem; margin-bottom: 1rem; font-weight: 600; font-style: italic;
+        }
+        p { margin-bottom: 1.6rem; }
+        strong { font-weight: 650; color: var(--c-ink); }
+        em { color: var(--c-ink-soft); }
+        
+        .mono { font-family: var(--f-mono); letter-spacing: -0.03em; font-size: 0.85rem; }
+        .caps { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.8rem; font-weight: 600; }
+
+        blockquote {
+            border-left: 3px solid var(--c-accent);
+            padding: 1.5rem 2rem; margin: 2.5rem 0;
+            font-style: italic; background: rgba(0,0,0,0.03); color: var(--c-ink-soft);
+        }
+
+        a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--c-grid); transition: border-color 0.2s; }
+        a:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+        /* --- LAYOUT --- */
+        .container { max-width: var(--max-width); margin: 0 auto; padding: 0 24px; }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.5rem 3rem; border-bottom: 1px solid rgba(26, 28, 27, 0.05);
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: rgba(242, 240, 230, 0.95); backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        .logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; font-family: var(--f-mono); }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; border: none; }
+        .nav-links a:hover, .nav-links a.active { opacity: 1; color: var(--c-accent); }
+
+        /* --- HEADER --- */
+        header { padding-top: 180px; padding-bottom: 60px; margin-bottom: 40px; }
+        .meta {
+            font-family: var(--f-mono); font-size: 0.85rem; color: var(--c-ink-soft);
+            display: flex; gap: 2rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--c-grid);
+        }
+        .meta div { display: flex; flex-direction: column; }
+        .meta span:first-child { text-transform: uppercase; font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.2rem; }
+        .meta span:last-child { font-weight: 600; color: var(--c-ink); }
+
+        /* --- CODE BLOCKS --- */
+        pre {
+            background-color: #EBE9E0 !important;
+            border: 1px solid var(--c-grid); border-radius: 4px;
+            padding: 1.5rem !important; margin: 2.5rem 0; font-size: 0.85rem !important;
+        }
+        code { font-family: var(--f-mono) !important; background: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.85em; }
+        pre code { background: none; padding: 0; }
+
+        /* --- VISUALIZATIONS --- */
+        .viz-wrapper {
+            margin: 4rem -2rem; /* Breakout */
+            background: #fff; border: 1px solid var(--c-grid); border-radius: 6px;
+            padding: 2rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+        }
+        .viz-title {
+            font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase;
+            color: var(--c-ink-soft); border-bottom: 1px dashed var(--c-grid);
+            padding-bottom: 0.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between;
+        }
+        canvas { width: 100%; display: block; background: transparent; }
+        
+        .viz-controls {
+            display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;
+            padding-top: 1.5rem; border-top: 1px dotted var(--c-grid);
+        }
+        .viz-btn {
+            background: transparent; border: 1px solid var(--c-grid); padding: 0.6rem 1.2rem;
+            font-family: var(--f-mono); font-size: 0.75rem; text-transform: uppercase;
+            cursor: pointer; color: var(--c-ink-soft); transition: all 0.2s; border-radius: 4px;
+        }
+        .viz-btn:hover { border-color: var(--c-ink); color: var(--c-ink); }
+        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+        
+        .viz-caption {
+            font-family: var(--f-mono); font-size: 0.85rem; color: var(--c-ink-soft);
+            text-align: center; margin-top: 1rem; max-width: 90%; margin-left: auto; margin-right: auto;
+        }
+
+        /* --- CITATIONS --- */
+        .citation {
+            vertical-align: super; font-size: 0.7em; color: var(--c-accent); cursor: pointer;
+            margin-left: 2px; font-family: var(--f-mono); position: relative; border: none;
+        }
+        .popover {
+            position: absolute; background: var(--c-ink); color: var(--c-paper);
+            padding: 1rem; border-radius: 4px; width: 300px; font-size: 0.8rem; font-family: var(--f-mono);
+            z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+            transform: translateY(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .popover.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 8rem; padding: 4rem 0; border-top: 1px solid var(--c-grid);
+            display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 0.85rem; color: var(--c-ink-soft);
+        }
+
+        @media (max-width: 850px) {
+            .viz-wrapper { margin: 3rem 0; }
+            h1 { font-size: 2.5rem; }
+            .meta { flex-direction: column; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">Rachit Gupta</div>
+        <div class="nav-links">
+            <a href="#" class="active">Essays</a>
+            <a href="#">Research</a>
+            <a href="#">Code</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="animate-enter">
+            <div class="caps" style="color: var(--c-accent); margin-bottom: 1rem;">Deep Learning / Architecture</div>
+            <h1>The 1-Bit Revolution: BitNet & The End of Multiplication</h1>
+            <div class="meta">
+                <div><span>Author</span><span>Rachit Gupta</span></div>
+                <div><span>Published</span><span>Dec 2025</span></div>
+                <div><span>Topic</span><span>Quantization</span></div>
+            </div>
+        </header>
+
+        <article>
+            <p class="animate-enter delay-1">
+                There is a pervasive illusion in modern deep learning that "intelligence" is a function of precision. We have spent the last decade building massive cathedrals of silicon—the Nvidia H100s and B200s of the world—specifically designed to crunch 16-bit and 8-bit floating-point numbers at exascale speeds. We treat the weights of a neural network like delicate, continuous physical constants. We assume that a weight value of <code>0.01234</code> captures a nuance of reality that <code>0.01235</code> does not.
+            </p>
+
+            <p class="animate-enter delay-2">
+                We obsess over loss curves that descend by increments of 0.001, implicitly believing that the "soul" of the model is encoded in the precise alignment of the 14th decimal place.
+            </p>
+
+            <p class="animate-enter delay-3">
+                But recent research from Microsoft Research, specifically the papers <em>"The Era of 1-bit LLMs"</em> <span class="citation" data-cit="Ma, S. et al. (2024). The Era of 1-bit LLMs.">[1]</span> and <em>"BitNet b1.58"</em> <span class="citation" data-cit="Wang, H. et al. (2024). BitNet: Scaling 1-bit Transformers.">[2]</span>, has posed a very dangerous question:
+            </p>
+
+            <blockquote class="animate-enter delay-3">
+                Do we really need 16 bits just to say "Yes", "No", or "Maybe"?
+            </blockquote>
+
+            <p>
+                It turns out, the answer is a resounding <em>no</em>. In fact, we might not even need multiplication. If you examine the history of deep learning, it is effectively a history of <strong>compression</strong>. We transitioned from double precision to single, to half, to <code>int8</code>. The arrow of progress points strictly downward in precision.
+            </p>
+
+            <p>
+                BitNet takes this to its logical conclusion (or perhaps, its asymptote). It suggests that if you train a model correctly, you can snap the weights to just three possible values: <strong>{-1, 0, 1}</strong>. This is the <strong>1.58-bit revolution</strong>. And it changes everything—from the math of the forward pass to the very hardware we need to build to run Artificial General Intelligence (AGI).
+            </p>
+
+            <!-- VIZ 1: WEIGHT COLLAPSE -->
+            <div class="viz-wrapper animate-enter delay-3">
+                <div class="viz-title">
+                    <span>Figure 1: The Collapse</span>
+                    <span>Training Simulation</span>
+                </div>
+                <canvas id="viz-collapse" height="300"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="collapseViz.reset()">Reset Distribution</button>
+                    <button class="viz-btn" onclick="collapseViz.trigger()">Start Quantization</button>
+                </div>
+                <div class="viz-caption">
+                    <strong>Visualizing "Weight Collapse":</strong> Initially, neural network weights follow a Gaussian (Bell Curve) distribution (Grey). During Quantization-Aware Training, they are forced to snap into three discrete buckets: -1, 0, and 1 (Orange/Black).
+                </div>
+            </div>
+
+            <h2>I. The Thermodynamics of Computing</h2>
+
+            <p>
+                To understand why BitNet is a breakthrough, we must momentarily abandon our identity as software engineers and think like hardware physicists.
+            </p>
+            <p>
+                In a standard Transformer (like Llama-3 or GPT-4), the vast majority of compute time is allocated to the <strong>Linear Layer</strong>. Mathematically, this is General Matrix Multiplication (GEMM):
+                $$ Y = W \cdot X $$
+            </p>
+            <p>
+                Where \(W\) is a matrix of weights and \(X\) is the input activation vector. In the standard paradigm, these are floating-point numbers. To multiply two floating-point numbers, the hardware must perform a complex dance:
+            </p>
+            <ol>
+                <li><strong>Mantissa Multiplication:</strong> Extract significant digits and multiply them (requires a massive transistor array).</li>
+                <li><strong>Exponent Addition:</strong> Calculate the new magnitude.</li>
+                <li><strong>Normalization:</strong> Shift bits to align the leading 1.</li>
+                <li><strong>Rounding:</strong> Round to the nearest representable value.</li>
+            </ol>
+            <p>
+                This requires a circuit involving roughly <strong>2,000 to 3,000 logic gates</strong> for FP16. It consumes silicon area, and switching those transistors consumes energy.
+            </p>
+
+            <h3>The Energy Hierarchy</h3>
+            <p>
+                According to standard semiconductor figures (often referencing the "Horowitz Numbers" from ISSCC), the energy cost of operations reveals a startling discrepancy. Energy is measured in picoJoules (pJ).
+            </p>
+
+            <!-- VIZ 2: ENERGY COST -->
+            <div class="viz-wrapper">
+                <div class="viz-title">
+                    <span>Figure 2: Thermodynamic Cost</span>
+                    <span>Scale: Logarithmic</span>
+                </div>
+                <canvas id="viz-energy" height="250"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="energyViz.setMode('log')">Log Scale</button>
+                    <button class="viz-btn" onclick="energyViz.setMode('linear')">Linear Scale</button>
+                </div>
+                <div class="viz-caption">
+                    <strong>Multiplication is the "Ferrari" of operations.</strong> It is fast and powerful, but it guzzles gas. Integer addition is a bicycle. BitNet attempts to move the entire workload to the bottom bar.
+                </div>
+            </div>
+
+            <p>
+                The core thesis of BitNet is simple: <strong>What if we could delete the multipliers?</strong>
+            </p>
+            <p>
+                If we constrain our weights \(W\) to be exactly \(\{-1, 0, 1\}\), we no longer need to multiply. The logic becomes trivial:
+            </p>
+            <ul>
+                <li style="margin-left: 1.5rem;">If \(W = 1\), we <strong>add</strong> the input \(X\) to the accumulator.</li>
+                <li style="margin-left: 1.5rem;">If \(W = -1\), we <strong>subtract</strong> the input \(X\).</li>
+                <li style="margin-left: 1.5rem;">If \(W = 0\), we do nothing (sparsity!).</li>
+            </ul>
+            <p>
+                The Matrix Multiplication operation transforms into a Matrix <strong>Addition</strong> operation. We have effectively turned the heavy machinery of a GPU into a massive array of simple accumulators.
+            </p>
+
+            <h2>II. The 1.58 Bit Paradigm: Information Theory</h2>
+
+            <p>
+                Why 1.58 bits? Why not just 1 bit?
+            </p>
+            <p>
+                We have attempted <strong>Binary Neural Networks (BNNs)</strong> before, where weights are strictly \(\{-1, 1\}\). That yields 1 bit of information. The issue with BNNs is <strong>rigidity</strong>. Every synapse <em>must</em> have an opinion. It must be excitatory (+1) or inhibitory (-1).
+            </p>
+            <p>
+                But neural networks, like biological brains, require the ability to remain silent. They need <strong>sparsity</strong>. In a high-dimensional vector space, "I don't know" or "This feature is irrelevant" is a crucial signal. A binary weight cannot be silent. It introduces noise into the accumulation where none should exist.
+            </p>
+            <p>
+                BitNet b1.58 introduces the value <strong>0</strong>. The weights \(W\) are constrained to \(\{-1, 0, 1\}\). The information capacity (entropy) of a single parameter with 3 equiprobable states is:
+                $$ \text{Bits} = \log_2(3) \approx 1.58496 $$
+            </p>
+
+            <h3>The Radix Economy</h3>
+            <p>
+                There is a deeper mathematical beauty here known as <strong>Radix Economy</strong>. If you want to store information with the minimum number of hardware "states" (cost = radix × width), the most efficient integer base is <strong>3 (Ternary)</strong>, which is the closest integer to \(e\) (2.718...).
+            </p>
+            <p>
+                Binary (Base 2) is convenient for switches, but Ternary (Base 3) is theoretically more dense per unit of hardware cost. BitNet is inadvertently tapping into this fundamental limit of information storage.
+            </p>
+
+            <h2>III. Training the Untrainable: The Gradient Hack</h2>
+
+            <p>
+                You cannot simply take a trained Llama-3 model and round every weight to the nearest integer. The model will collapse. This approach is called <strong>Post-Training Quantization (PTQ)</strong>. It destroys the delicate geometric relationships between weights.
+            </p>
+            <p>
+                BitNet uses <strong>Quantization-Aware Training (QAT)</strong>. We train the model <em>knowing</em> it will be quantized. The error introduced by rounding isn't a surprise; it's part of the loss landscape. But this introduces a major mathematical hurdle: <strong>The Staircase Problem</strong>.
+            </p>
+            <p>
+                To train a network via Backpropagation, we need to calculate gradients. The function to quantize a weight is a step function (Rounding). The derivative of a step function is <strong>0</strong> everywhere (on the flat steps) and <strong>undefined</strong> at the jumps. If you try to backpropagate through this, your gradients become zero. The model learns nothing.
+            </p>
+
+            <!-- VIZ 3: STE VISUALIZATION -->
+            <div class="viz-wrapper">
+                <div class="viz-title">
+                    <span>Figure 3: The Straight-Through Estimator</span>
+                    <span>Gradient Flow</span>
+                </div>
+                <canvas id="viz-ste" height="300"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="steViz.setMode('forward')">Forward Pass</button>
+                    <button class="viz-btn" onclick="steViz.setMode('backward')">Backward Pass</button>
+                </div>
+                <div class="viz-caption">
+                    <strong>The Lie we tell the Optimizer:</strong> In the Forward Pass (Orange), the weights snap to the grid. In the Backward Pass (Grey), we pretend the function is smooth (Identity) so the gradient signal can flow back to update the latent weights.
+                </div>
+            </div>
+
+            <p>
+                We use the <strong>Straight-Through Estimator (STE)</strong>. We decouple the forward pass from the backward pass. We maintain a <strong>Latent Weight</strong> (in high precision) for the optimizer.
+            </p>
+
+            <pre><code class="language-python">class BitLinear(nn.Linear):
+    def forward(self, x):
+        # 1. Latent Weights (High Precision)
+        w = self.weight 
+        
+        # 2. Scale (AbsMean)
+        gamma = w.abs().mean().clamp(min=1e-5)
+        w_scaled = w / gamma
+        
+        # 3. Quantize + STE Magic
+        # The ".detach()" ensures gradients ignore the rounding
+        w_quant = (w_scaled.round().clamp(-1, 1) - w_scaled).detach() + w_scaled
+        
+        # 4. Rescale and Linear (Integer Add)
+        return F.linear(x, w_quant * gamma)</code></pre>
+
+            <h2>IV. The Memory Wall & The End of GPUs</h2>
+
+            <p>
+                This is where things get speculative and exciting. Current GPUs (Nvidia H100) are designed with massive generic Tensor Cores. These are optimized for floats. But BitNet is an off-road vehicle.
+            </p>
+            <p>
+                The bottleneck for Large Language Models today is the <strong>Memory Wall</strong>. We spend more time and energy moving data from HBM (High Bandwidth Memory) to the chip than we do computing. This is the Von Neumann bottleneck.
+            </p>
+            <ul>
+                <li><strong>FP16 Model:</strong> 16 bits per parameter.</li>
+                <li><strong>BitNet Model:</strong> ~1.58 bits per parameter.</li>
+            </ul>
+            <p>
+                This represents a <strong>10x reduction in memory bandwidth pressure</strong>.
+            </p>
+
+            <!-- VIZ 4: MEMORY WALL -->
+            <div class="viz-wrapper">
+                <div class="viz-title">
+                    <span>Figure 4: The Bandwidth Simulation</span>
+                    <span>Throughput</span>
+                </div>
+                <canvas id="viz-memory" height="220"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="memoryViz.setMode('fp16')">Standard (FP16)</button>
+                    <button class="viz-btn" onclick="memoryViz.setMode('bitnet')">BitNet (1.58b)</button>
+                </div>
+                <div class="viz-caption">
+                    <strong>Visualizing the Bus:</strong> Comparing data packets moving from Memory (Left) to Compute (Right). BitNet packets are 10x smaller, allowing for massive throughput on the same hardware bus.
+                </div>
+            </div>
+
+            <p>
+                This implies that we could run a GPT-4 class model on a device with 1/10th the memory bandwidth. We are likely moving toward an era of <strong>Adder Clouds</strong> or specialized ASIC meshes (LPUs - Language Processing Units) like those from Groq, which rely on deterministic, SRAM-heavy architectures. BitNet is the software architecture that matches their hardware philosophy.
+            </p>
+
+            <h2>Conclusion</h2>
+
+            <p>
+                We are at a bifurcation point in AI history. Path A is the current trajectory: We keep building bigger GPUs, with more HBM, consuming more power, to crunch 16-bit or 8-bit floating point numbers. We brute force the math.
+            </p>
+            <p>
+                Path B is the BitNet trajectory: We change the math. We realize that the "resolution" of intelligence is not in the depth of the float, but in the width of the network. We trade precision for connectivity.
+            </p>
+            <p>
+                If BitNet b1.58 holds up at the scale of trillions of parameters, the implications are staggering. It means the "brain" of the future looks less like a supercomputer doing calculus, and more like a massive, sparse, binary switching yard.
+            </p>
+
+            <p>Happy Hacking.</p>
+        </article>
+
+        <footer>
+            <div style="display: flex; flex-direction: column;">
+                <strong>Rachit Gupta</strong>
+                <span class="mono" style="margin-top:5px; opacity:0.7;">© 2025</span>
+            </div>
+            <div class="footer-links">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">Scholar</a>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- POPOVER -->
+    <div id="popover" class="popover"></div>
+
+    <!-- JAVASCRIPT FOR VISUALIZATIONS -->
+    <script>
+        // --- CONFIG ---
+        const COLORS = {
+            paper: '#F2F0E6',
+            ink: '#1A1C1B',
+            soft: '#4A4D4B',
+            accent: '#D64000',
+            grid: '#D1CEC4'
+        };
+        const getDPR = () => window.devicePixelRatio || 1;
+
+        // --- VIZ 1: WEIGHT COLLAPSE ---
+        const collapseViz = (function() {
+            const canvas = document.getElementById('viz-collapse');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let phase = 0; // 0 to 1
+            let animationId;
+
+            function init() {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = getDPR();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                
+                // Init Particles (Gaussian)
+                particles = Array.from({length: 300}, () => {
+                    // Box-Muller transform
+                    let u = 0, v = 0;
+                    while(u===0) u = Math.random();
+                    while(v===0) v = Math.random();
+                    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+                    // z is approx -3 to 3
+                    
+                    let targetBin = 0;
+                    if(z < -0.6) targetBin = -1;
+                    else if(z > 0.6) targetBin = 1;
+
+                    return {
+                        val: z,
+                        y: Math.random() * rect.height,
+                        speed: Math.random() * 0.5 + 0.2,
+                        targetBin: targetBin
+                    };
+                });
+            }
+
+            function draw() {
+                const rect = canvas.getBoundingClientRect();
+                const w = rect.width;
+                const h = rect.height;
+                ctx.clearRect(0, 0, w, h);
+
+                // Grid
+                if (phase > 0.1) {
+                    ctx.strokeStyle = COLORS.grid;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    [0.2, 0.5, 0.8].forEach(p => {
+                        ctx.moveTo(w*p, 0); ctx.lineTo(w*p, h);
+                    });
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Labels
+                    ctx.fillStyle = `rgba(26, 28, 27, ${phase})`;
+                    ctx.font = '14px JetBrains Mono';
+                    ctx.textAlign = 'center';
+                    ctx.fillText("-1", w*0.2, 30);
+                    ctx.fillText("0", w*0.5, 30);
+                    ctx.fillText("+1", w*0.8, 30);
+                }
+
+                particles.forEach(p => {
+                    // Gaussian X (mapped to canvas width)
+                    // z=-3 -> 0, z=3 -> w
+                    const gaussX = ((p.val + 3) / 6) * w;
+                    
+                    // Target X
+                    let targetX = w * 0.5;
+                    if(p.targetBin === -1) targetX = w * 0.2;
+                    if(p.targetBin === 1) targetX = w * 0.8;
+
+                    // Lerp
+                    const x = gaussX * (1 - phase) + targetX * phase;
+                    
+                    // Jitter
+                    const jitter = (1 - phase) * (Math.random()-0.5) * 10;
+                    
+                    ctx.fillStyle = phase > 0.8 && p.targetBin !== 0 ? COLORS.accent : COLORS.ink;
+                    if(phase > 0.8 && p.targetBin === 0) ctx.fillStyle = COLORS.soft;
+
+                    ctx.beginPath();
+                    ctx.arc(x + jitter, p.y, 3, 0, Math.PI*2);
+                    ctx.fill();
+
+                    // Animate Y
+                    p.y += p.speed;
+                    if(p.y > h) p.y = 0;
+                });
+
+                requestAnimationFrame(draw);
+            }
+
+            init();
+            draw();
+            window.addEventListener('resize', init);
+
+            return {
+                trigger: () => {
+                    let start = null;
+                    function step(t) {
+                        if(!start) start = t;
+                        const p = (t - start) / 1000;
+                        phase = Math.min(p, 1);
+                        if(phase < 1) requestAnimationFrame(step);
+                    }
+                    requestAnimationFrame(step);
+                },
+                reset: () => { phase = 0; init(); }
+            }
+        })();
+
+
+        // --- VIZ 2: ENERGY COST ---
+        const energyViz = (function() {
+            const canvas = document.getElementById('viz-energy');
+            const ctx = canvas.getContext('2d');
+            let mode = 'log';
+            const data = [
+                { l: 'FP16 Mult', v: 1.1, c: COLORS.accent },
+                { l: 'FP16 Add', v: 0.4, c: COLORS.soft },
+                { l: 'Int8 Add', v: 0.03, c: COLORS.ink }
+            ];
+
+            function draw() {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = getDPR();
+                if(canvas.width !== rect.width * dpr) {
+                    canvas.width = rect.width * dpr;
+                    canvas.height = 250 * dpr;
+                    ctx.scale(dpr, dpr);
+                }
+                const w = rect.width;
+                ctx.clearRect(0,0,w,250);
+
+                const barH = 40;
+                const gap = 30;
+                const startY = 40;
+                const maxW = w - 140;
+
+                data.forEach((d, i) => {
+                    const y = startY + i*(barH+gap);
+                    
+                    // Label
+                    ctx.fillStyle = COLORS.ink;
+                    ctx.font = '14px JetBrains Mono';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(d.l, 110, y + barH/2 + 4);
+
+                    // Bar
+                    let width;
+                    if(mode === 'linear') {
+                        width = (d.v / 1.2) * maxW;
+                    } else {
+                        // Log scale: 0.01 -> 0, 1.5 -> maxW
+                        const minL = Math.log10(0.01);
+                        const maxL = Math.log10(1.5);
+                        const vL = Math.log10(d.v);
+                        width = ((vL - minL) / (maxL - minL)) * maxW;
+                    }
+
+                    ctx.fillStyle = '#E0E0E0';
+                    ctx.fillRect(120, y, maxW, barH); // Track
+
+                    ctx.fillStyle = d.c;
+                    ctx.fillRect(120, y, width, barH); // Fill
+
+                    // Value
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'right';
+                    if(width > 50) ctx.fillText(d.v + " pJ", 120 + width - 10, y + barH/2 + 4);
+                    else {
+                        ctx.fillStyle = COLORS.ink;
+                        ctx.textAlign = 'left';
+                        ctx.fillText(d.v + " pJ", 120 + width + 10, y + barH/2 + 4);
+                    }
+                });
+            }
+
+            draw();
+            window.addEventListener('resize', draw);
+
+            return {
+                setMode: (m) => {
+                    mode = m;
+                    draw();
+                    document.querySelectorAll('#viz-energy + .viz-controls .viz-btn').forEach(b => {
+                        if(b.textContent.toLowerCase().includes(m)) b.classList.add('active');
+                        else b.classList.remove('active');
+                    });
+                }
+            }
+        })();
+
+
+        // --- VIZ 3: STE ---
+        const steViz = (function() {
+            const canvas = document.getElementById('viz-ste');
+            const ctx = canvas.getContext('2d');
+            let mode = 'forward';
+            let time = 0;
+
+            function draw() {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = getDPR();
+                if(canvas.width !== rect.width * dpr) {
+                    canvas.width = rect.width * dpr;
+                    canvas.height = 300 * dpr;
+                    ctx.scale(dpr, dpr);
+                }
+                const w = rect.width;
+                const h = 300;
+                const cx = w/2;
+                const cy = h/2;
+                const scale = 50;
+
+                ctx.clearRect(0,0,w,h);
+
+                // Axes
+                ctx.strokeStyle = COLORS.grid;
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(w,cy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+
+                // Plot Function
+                ctx.lineWidth = 3;
+                if(mode === 'forward') {
+                    ctx.strokeStyle = COLORS.accent;
+                    ctx.beginPath();
+                    // Step function
+                    const step = (x1, x2, y) => {
+                        ctx.moveTo(cx + x1*scale, cy - y*scale);
+                        ctx.lineTo(cx + x2*scale, cy - y*scale);
+                    };
+                    step(-3, -0.5, -1);
+                    step(-0.5, 0.5, 0);
+                    step(0.5, 3, 1);
+                    // Vertical lines
+                    ctx.moveTo(cx-0.5*scale, cy+scale); ctx.lineTo(cx-0.5*scale, cy);
+                    ctx.moveTo(cx+0.5*scale, cy); ctx.lineTo(cx+0.5*scale, cy-scale);
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = COLORS.soft;
+                    ctx.setLineDash([5,5]);
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 3*scale, cy + 3*scale);
+                    ctx.lineTo(cx + 3*scale, cy - 3*scale);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // Animated Ball
+                const t = Math.sin(time) * 2.5; // Input X
+                const inputX = cx + t*scale;
+                
+                // Draw Input
+                ctx.fillStyle = COLORS.soft;
+                ctx.beginPath(); ctx.arc(inputX, cy + 120, 5, 0, Math.PI*2); ctx.fill();
+                ctx.font = '12px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText("x", inputX, cy+140);
+
+                // Draw Output
+                let outY;
+                if(mode === 'forward') {
+                    let outVal = 0;
+                    if(t > 0.5) outVal = 1; else if(t < -0.5) outVal = -1;
+                    outY = cy - outVal*scale;
+                } else {
+                    outY = cy - t*scale; // Identity
+                }
+
+                ctx.fillStyle = COLORS.accent;
+                ctx.beginPath(); ctx.arc(inputX, outY, 8, 0, Math.PI*2); ctx.fill();
+                
+                // Connector
+                ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                ctx.setLineDash([2,2]);
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(inputX, cy+120); ctx.lineTo(inputX, outY); ctx.stroke();
+
+                time += 0.03;
+                requestAnimationFrame(draw);
+            }
+            draw();
+
+            return {
+                setMode: (m) => {
+                    mode = m;
+                    document.querySelectorAll('#viz-ste + .viz-controls .viz-btn').forEach(b => {
+                        if(b.textContent.toLowerCase().includes(m.split(' ')[0])) b.classList.add('active');
+                        else b.classList.remove('active');
+                    });
+                }
+            }
+        })();
+
+
+        // --- VIZ 4: MEMORY WALL ---
+        const memoryViz = (function() {
+            const canvas = document.getElementById('viz-memory');
+            const ctx = canvas.getContext('2d');
+            let packets = [];
+            let mode = 'fp16';
+            let lastSpawn = 0;
+
+            function draw(ts) {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = getDPR();
+                if(canvas.width !== rect.width * dpr) {
+                    canvas.width = rect.width * dpr;
+                    canvas.height = 220 * dpr;
+                    ctx.scale(dpr, dpr);
+                }
+                const w = rect.width;
+                const h = 220;
+                ctx.clearRect(0,0,w,h);
+
+                // Draw Bus
+                const busY = h/2 - 20;
+                ctx.fillStyle = '#EAE8E0';
+                ctx.fillRect(0, busY, w, 40);
+                
+                ctx.fillStyle = COLORS.ink;
+                ctx.font = '12px JetBrains Mono';
+                ctx.fillText("MEMORY", 10, busY - 10);
+                ctx.textAlign = 'right';
+                ctx.fillText("COMPUTE", w-10, busY - 10);
+
+                // Spawn
+                const rate = mode === 'fp16' ? 400 : 50; // BitNet spawns faster/more
+                if(ts - lastSpawn > rate) {
+                    packets.push({
+                        x: 0,
+                        size: mode === 'fp16' ? 30 : 6,
+                        color: mode === 'fp16' ? COLORS.ink : COLORS.accent,
+                        speed: 4
+                    });
+                    lastSpawn = ts;
+                }
+
+                // Update
+                for(let i=packets.length-1; i>=0; i--) {
+                    let p = packets[i];
+                    p.x += p.speed;
+                    
+                    ctx.fillStyle = p.color;
+                    if(mode === 'fp16') {
+                        ctx.fillRect(p.x, busY + 5, p.size, p.size);
+                        ctx.fillStyle = 'white';
+                        ctx.font = '10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText("16", p.x + 15, busY + 24);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(p.x, busY + 20, p.size/2, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+
+                    if(p.x > w) packets.splice(i, 1);
+                }
+
+                requestAnimationFrame(draw);
+            }
+            requestAnimationFrame(draw);
+
+            return {
+                setMode: (m) => {
+                    mode = m;
+                    packets = [];
+                    document.querySelectorAll('#viz-memory + .viz-controls .viz-btn').forEach(b => {
+                        if(b.textContent.toLowerCase().includes(m === 'fp16' ? 'standard' : 'bitnet')) b.classList.add('active');
+                        else b.classList.remove('active');
+                    });
+                }
+            }
+        })();
+
+
+        // --- POPOVER LOGIC ---
+        const popover = document.getElementById('popover');
+        document.querySelectorAll('.citation').forEach(cit => {
+            cit.addEventListener('mouseenter', (e) => {
+                popover.textContent = e.target.getAttribute('data-cit');
+                popover.classList.add('visible');
+                const rect = e.target.getBoundingClientRect();
+                popover.style.left = (rect.left + window.scrollX - 100) + 'px';
+                popover.style.top = (rect.top + window.scrollY - 40) + 'px';
+            });
+            cit.addEventListener('mouseleave', () => popover.classList.remove('visible'));
+        });
+
+        // Prism JS Load
+        // (Handled by CDN in head)
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+</body>
+</html>

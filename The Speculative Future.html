@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Speculative Future: Drafting & Verification | Rachit Gupta</title>
+    
+    <!-- Fonts: Newsreader (Serif) & JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+    
+    <!-- Syntax Highlighting (Prism) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    
+    <!-- MathJax -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: { fontCache: 'global' }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* --- DESIGN SYSTEM --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+            
+            --c-draft: #2E7D32; /* Green for draft/intern */
+            --c-verify: #1565C0; /* Blue for verify/CEO */
+            --c-reject: #C62828; /* Red for rejection */
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: fadeInUp 0.8s var(--easing-sharp) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* --- TYPOGRAPHY & LAYOUT --- */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 160px 24px 100px 24px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-top: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-family: var(--f-mono);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--c-ink-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p { margin-bottom: 1.5rem; }
+
+        .mono { font-family: var(--f-mono); font-size: 0.85rem; }
+        .caps { text-transform: uppercase; letter-spacing: 0.05em; }
+
+        blockquote {
+            border-left: 3px solid var(--c-accent);
+            padding-left: 1.5rem;
+            margin: 2.5rem 0;
+            font-style: italic;
+            font-size: 1.25rem;
+            color: var(--c-ink-soft);
+            background: rgba(214, 64, 0, 0.04);
+            padding: 2rem;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: all 0.2s;
+        }
+        a:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid rgba(26, 28, 27, 0.05);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; font-family: var(--f-mono); }
+        .nav-links { display: flex; gap: 2.5rem; }
+        .nav-links a { font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; border: none; }
+        .nav-links a:hover, .nav-links a.active { opacity: 1; color: var(--c-accent); }
+
+        /* --- CODE BLOCKS --- */
+        pre {
+            background: #fff !important;
+            border: 1px solid var(--c-grid);
+            border-radius: 4px;
+            padding: 1.5rem !important;
+            margin: 2.5rem 0;
+            font-family: var(--f-mono) !important;
+            font-size: 0.85rem !important;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.03);
+            overflow-x: auto;
+        }
+        code { font-family: var(--f-mono); background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 3px; font-size: 0.85em; }
+        pre code { background: transparent; padding: 0; }
+
+        /* --- VISUALIZATIONS --- */
+        .viz-box {
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            padding: 24px;
+            margin: 3.5rem 0;
+            border-radius: 2px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            position: relative;
+        }
+
+        .viz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .viz-title { font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; color: var(--c-ink-soft); font-weight: 700; }
+        .viz-tag { font-family: var(--f-mono); font-size: 0.7rem; color: var(--c-accent); border: 1px solid var(--c-accent); padding: 2px 6px; border-radius: 4px; }
+
+        canvas { display: block; width: 100%; background: #fafafa; border: 1px solid #f0f0f0; }
+
+        .viz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--c-grid);
+        }
+
+        .viz-btn {
+            background: transparent;
+            border: 1px solid var(--c-grid);
+            padding: 0.5rem 1rem;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--c-ink-soft);
+            transition: all 0.2s;
+        }
+        .viz-btn:hover { border-color: var(--c-ink); color: var(--c-ink); }
+        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+
+        /* Custom Styles for specific viz */
+        .race-track {
+            font-family: var(--f-mono);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: #fafafa;
+            border-left: 3px solid var(--c-grid);
+            padding: 15px;
+            min-height: 85px;
+            white-space: pre-wrap;
+            margin-bottom: 1rem;
+        }
+        .cursor { display: inline-block; width: 9px; height: 1.2em; background: var(--c-accent); animation: blink 1s infinite; vertical-align: text-bottom; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        .chunk-draft { background: rgba(46, 125, 50, 0.1); color: var(--c-draft); border-bottom: 2px solid var(--c-draft); }
+        
+        /* CITATIONS */
+        .citation {
+            vertical-align: super;
+            font-size: 0.6em;
+            color: var(--c-accent);
+            cursor: pointer;
+            font-family: var(--f-mono);
+            margin-left: 2px;
+            font-weight: 700;
+            border: none;
+        }
+        .popover {
+            position: absolute;
+            background: var(--c-ink);
+            color: var(--c-paper);
+            padding: 1rem;
+            border-radius: 4px;
+            width: 280px;
+            font-size: 0.8rem;
+            font-family: var(--f-mono);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            line-height: 1.4;
+        }
+        .citation:hover + .popover { opacity: 1; top: -60px; left: 20px; }
+
+        /* FOOTER */
+        footer {
+            padding: 6rem 3rem;
+            border-top: 1px solid var(--c-grid);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            margin-top: 6rem;
+        }
+        .footer-links { display: flex; gap: 2rem; justify-content: flex-end; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RACHIT GUPTA</div>
+        <div class="nav-links">
+            <a href="#" class="active">Engineering</a>
+            <a href="#">Research</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="animate-enter">
+            <div class="mono caps" style="color: var(--c-accent); margin-bottom: 1rem;">Optimization / Systems</div>
+            <h1>The Speculative Future:<br>Drafting & Verification</h1>
+            <div class="mono" style="color: var(--c-ink-soft); margin-top: 1.5rem;">
+                By <strong>Rachit Gupta</strong> &bull; Dec 2025 &bull; 25 min read
+            </div>
+        </header>
+
+        <section class="animate-enter delay-1" style="margin-top: 4rem;">
+            <p>Hello everyone. We are back.</p>
+
+            <p>If you have been following the explosion of Large Language Models (LLMs) over the last few years—and if you are reading this, I assume you have—you have likely developed a very specific, almost Pavlovian relationship with the <strong>cursor</strong>.</p>
+            
+            <p>You know the one. That blinking vertical line that dictates the tempo of your interaction with intelligence. You type a prompt into ChatGPT, or you fire up a local instance of Llama-3-70B on your H100 cluster. You hit enter. And then... you wait.</p>
+            
+            <p style="text-align: center; font-family: var(--f-mono); color: var(--c-ink-soft); margin: 3rem 0;">
+                Token. <span style="opacity:0.5">...</span> Token. <span style="opacity:0.5">...</span> Token.
+            </p>
+
+            <p>It is agonizingly serial. It feels like watching a human type, which is deeply ironic. We have built these massive silicon cathedrals—clusters capable of crunching exaFLOPS of dense compute—and yet they speak to us at the speed of a caffeinated undergraduate. We are driving a Formula 1 car in a school zone.</p>
+
+            <p>Why is this? Why, when we have so much raw compute power, are we stuck reading text at 30-50 tokens per second? Why is the latency of generating a single word so high, even on hardware that costs as much as a house?</p>
+
+            <p>The answer lies in the physics of hardware, specifically the <strong>Memory Wall</strong>, and the mathematics of <strong>Autoregression</strong>. But the solution? The solution is one of the most beautiful "free lunches" I have seen in computer science in a long time. It suggests a fundamental shift in how we think about intelligence:</p>
+
+            <blockquote>
+                <strong>Core Thesis:</strong> Big models are too slow to read. Small models should write; big models should edit.
+            </blockquote>
+
+            <p>Welcome to the deep dive on <strong>Speculative Decoding</strong>.</p>
+        </section>
+
+        <!-- SECTION 1 -->
+        <section class="animate-enter delay-2">
+            <h2>1. The Physics of the Bottleneck</h2>
+            
+            <p>To understand the solution, we first have to respect the problem from first principles. Let’s do some back-of-the-napkin math to see why standard generation is slow.</p>
+
+            <p>Current LLMs are <strong>autoregressive</strong>. This means the generation of token $x_t$ depends on tokens $x_0$ through $x_{t-1}$. You cannot compute the 100th token until you have computed the 99th. This creates a strict serial dependency chain. You cannot parallelize "time."</p>
+
+            <p>However, the real villain isn't the math; it's the <strong>Memory Wall</strong>.</p>
+
+            <p>Consider a 70B parameter model. If we run this in FP16 (2 bytes per weight), the model size is roughly $140 \text{ GB}$. To generate <strong>one single token</strong>, the GPU must fetch all 140 GB of these weights from its High Bandwidth Memory (HBM) and move them to the on-chip SRAM where the Tensor Cores live. This happens for <em>every</em> token. The weights don't stay in the cache; they are flushed out by the next layer's weights.</p>
+
+            <p>Let's look at the specs of an NVIDIA A100 (80GB). The aggregate memory bandwidth is roughly $2,000 \text{ GB/s}$. The time required just to <em>move the data</em> for one token ($T_{mem}$) is:</p>
+
+            $$ T_{\text{mem}} = \frac{140 \text{ GB}}{2000 \text{ GB/s}} = 0.07 \text{ seconds} = 70 \text{ ms} $$
+
+            <p>This implies a hard physical speed limit of roughly <strong>14 tokens per second</strong>. Meanwhile, the Tensor Cores are sitting idle 99% of the time. The <strong>Arithmetic Intensity</strong> (ratio of math operations to memory bytes) of a Batch-Size-1 generation is pitifully low.</p>
+
+            <!-- VIZ 1: THE MEMORY PIPE -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span class="viz-title">Figure 1: The Memory Pipe</span>
+                    <span class="viz-tag">Interactive</span>
+                </div>
+                <canvas id="viz-pipe" width="700" height="250"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="setPipeMode('serial')">Standard (Batch 1)</button>
+                    <button class="viz-btn" onclick="setPipeMode('parallel')">Speculative (Batch K)</button>
+                </div>
+                <p class="mono" style="margin-top: 15px; font-size: 0.8rem; text-align: center; color: var(--c-ink-soft);">
+                    <strong>Visualization Logic:</strong> In Standard mode (Gray), notice the small payloads leaving the massive "Compute Turbine" idle. In Speculative mode (Blue), a "Batch" fills the bandwidth pipe, utilizing the turbine fully without adding latency.
+                </p>
+            </div>
+
+            <p>The insight: <strong>GPUs love batches.</strong> If I asked that same GPU to process 10 tokens in parallel (calculating probabilities for positions $t, \dots, t+9$), it would take roughly the same 70ms. The cost is paying the toll to cross the Memory Wall; once the weights are in SRAM, the math is nearly free. We need to convert a serial problem into a batch problem.</p>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section>
+            <h2>2. The Draft-Verify Loop</h2>
+            
+            <p>How do we turn a serial generation problem into a batch processing problem? We need to separate the roles of <strong>Authoring</strong> and <strong>Editing</strong>. This concept was formalized in concurrent papers by DeepMind and Google Research.</p>
+
+            <p>Imagine a corporate office consisting of two agents:</p>
+            <ul>
+                <li><strong>The Target Model ($M_p$): The CEO.</strong> A 70B parameter genius. High nuance, extremely expensive, slow.</li>
+                <li><strong>The Draft Model ($M_q$): The Intern.</strong> A small 7B parameter model. Fast, enthusiastic, types 100 words per minute, but occasionally hallucinates.</li>
+            </ul>
+
+            <h3>The Workflow</h3>
+            <ol>
+                <li><strong>Drafting:</strong> The CEO tells the Intern, <em>"Go write the next 5 words."</em> The Intern sprints. Because the Intern is small (10x smaller), they generate text 10x faster.</li>
+                <li><strong>Verification:</strong> The Intern hands the sequence "The quick brown fox" to the CEO.</li>
+                <li><strong>Parallel Review:</strong> The CEO ($M_p$) runs a single forward pass. Because of the causal masking in Transformers, the CEO can compute the probabilities for <em>all</em> positions simultaneously.</li>
+            </ol>
+
+            <p>We have successfully converted 4 serial memory fetches into 1 memory fetch with a batch of calculations. If the CEO agrees with the Intern, we just generated 4 tokens for the price of 1.</p>
+
+            <!-- VIZ 2: TIMELINE GANTT -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span class="viz-title">Figure 2: Execution Timeline</span>
+                    <span class="viz-tag">Simulation</span>
+                </div>
+                <canvas id="viz-gantt" width="700" height="220"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" id="btn-gantt-std" onclick="setGanttMode('std')">Standard (Serial)</button>
+                    <button class="viz-btn" id="btn-gantt-spec" onclick="setGanttMode('spec')">Speculative (Parallel)</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3 -->
+        <section>
+            <h2>3. The Mathematics of Lossless Speed</h2>
+            
+            <p>A skeptic might ask: <em>"Doesn't this degrade quality? If the Intern writes the text, isn't the text dumber?"</em></p>
+            
+            <p>This is the most crucial theoretical point: <strong>Speculative Decoding is lossless.</strong> The output distribution is guaranteed to be mathematically identical to the Target Model's distribution $p(x)$. We achieve this via <strong>Rejection Sampling</strong>.</p>
+
+            <p>For a drafted token $\tilde{x}$, we calculate an acceptance probability $\alpha$:</p>
+
+            $$ \alpha = \min \left( 1, \frac{p(\tilde{x})}{q(\tilde{x})} \right) $$
+
+            <p>We sample a random uniform variable $U \sim [0, 1]$. If $U < \alpha$, we <strong>Accept</strong>. If not, we <strong>Reject</strong>.</p>
+
+            <h3>The Visualization of P vs Q</h3>
+            <p>In the interactive visualization below, observe the interplay between the Draft probability ($q$) and Target probability ($p$).</p>
+            <ul>
+                <li><strong>Case A (Agreement):</strong> If $p(x) \ge q(x)$, the ratio is $\ge 1$. We always accept.</li>
+                <li><strong>Case B (Disagreement):</strong> If $p(x) < q(x)$, the Intern was overconfident. We reject with probability proportional to the divergence.</li>
+            </ul>
+
+            <!-- VIZ 3: REJECTION SAMPLING -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span class="viz-title">Figure 3: Rejection Sampling Logic</span>
+                    <span class="viz-tag">Math</span>
+                </div>
+                <canvas id="viz-sampling" width="700" height="300"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn" onclick="resampleViz()">Simulate New Token</button>
+                </div>
+            </div>
+
+            <h3>The Correction Step</h3>
+            <p>If we reject a token, we must sample from the <strong>residual distribution</strong> $p'(x)$ to make up the difference:</p>
+
+            $$ p'(x) = \text{norm} \left( \max(0, p(x) - q(x)) \right) $$
+
+            <p>This effectively says: "Sample from the probability mass that the Draft model failed to cover." By sampling from this corrected distribution, we recover the exact statistics of the large model.</p>
+        </section>
+
+        <!-- SECTION 4 -->
+        <section>
+            <h2>4. Medusa: Growing Multiple Heads</h2>
+            
+            <p>Standard speculative decoding requires two models loaded in memory. This strains VRAM. An alternative approach, popularized by the <strong>Medusa</strong> architecture, asks: <em>Why hire an intern when you can just grow more heads?</em></p>
+
+            <p>In Medusa, we freeze the original LLM backbone and train multiple lightweight "Heads" on top of the final layer. Head 1 predicts $t+1$. Head 2 predicts $t+2$, and so on.</p>
+
+            <p>This means the model outputs a <strong>Tree of Possibilities</strong> in a single pass. We use a mechanism called <strong>Tree Attention</strong> to verify all branches of this tree simultaneously. It is like Dr. Strange viewing 14 million futures and selecting the one that matches ground truth.</p>
+
+            <h3>The Hierarchy of Models (Matryoshka Inference)</h3>
+            <p>
+                We are moving toward a <strong>Matryoshka Inference</strong> stack, mimicking the biological brain's layers of processing.
+            </p>
+            <ol>
+                <li><strong>Nano-Model (CPU):</strong> Handles glue words ("the", "is", "of"). Latency: ~0ms.</li>
+                <li><strong>Micro-Model (GPU Draft):</strong> A 7B model handling grammar and facts. Latency: ~10ms.</li>
+                <li><strong>Macro-Model (Cloud H100):</strong> The 400B parameter reasoning engine. It sits dormant, acting as the "System 2" supervisor, intervening only when the smaller models' perplexity spikes.</li>
+            </ol>
+        </section>
+
+        <!-- SECTION 5 -->
+        <section>
+            <h2>5. The Interactive Experience</h2>
+            
+            <p>Theory and math are one thing; feeling the latency reduction is another. Below is a simulation of the "Typing Race."</p>
+            
+            <p>The <strong>Standard Cursor</strong> represents the memory-bound, serial fetching of weights. The <strong>Speculative Cursor</strong> represents the bursty nature of Draft-Verify loops, where valid chunks of text appear instantly after verification.</p>
+
+            <!-- VIZ 4: TYPING RACE -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span class="viz-title">Figure 4: Latency Simulation</span>
+                    <span class="viz-tag">Live Demo</span>
+                </div>
+                
+                <div class="mono" style="margin-bottom:5px; font-size: 0.8rem; color: var(--c-ink-soft);">STANDARD (SERIAL)</div>
+                <div class="race-track" id="track-std"></div>
+                
+                <div class="mono" style="margin-bottom:5px; font-size: 0.8rem; margin-top: 20px; color: var(--c-draft);">SPECULATIVE (DRAFT + VERIFY)</div>
+                <div class="race-track" id="track-spec" style="border-left-color: var(--c-draft);"></div>
+
+                <div class="viz-controls">
+                    <button class="viz-btn" onclick="startRace()">▶ Start Race</button>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>6. Implementation Code</h2>
+            <p>To ground this in reality, here is the PyTorch-style logic for the draft-verify loop. Note how the rejection sampling ensures we never deviate from the target distribution.</p>
+
+<pre><code class="language-python">def speculative_sampling_step(target_model, draft_model, prefix, gamma=4):
+    """
+    Executes one Draft-Verify cycle.
+    gamma: The number of tokens to look ahead (K).
+    """
+    # 1. DRAFTING (The Intern)
+    # Fast autoregressive generation with small model
+    draft_tokens, draft_probs = [], []
+    curr = prefix
+    for _ in range(gamma):
+        with torch.no_grad():
+            logits = draft_model(curr)
+        probs = F.softmax(logits[:, -1, :], dim=-1)
+        token = torch.multinomial(probs, 1)
+        draft_tokens.append(token)
+        draft_probs.append(probs.gather(1, token))
+        curr = torch.cat([curr, token], dim=1)
+
+    # 2. VERIFICATION (The CEO)
+    # Parallel forward pass on [prefix + draft]
+    full_seq = torch.cat([prefix, *draft_tokens], dim=1)
+    with torch.no_grad():
+        target_logits = target_model(full_seq)
+
+    # 3. REJECTION SAMPLING
+    accepted = []
+    for i in range(gamma):
+        q = draft_probs[i]
+        p = F.softmax(target_logits[:, len(prefix)+i-1, :], dim=-1)
+        p_val = p.gather(1, draft_tokens[i])
+        
+        # Alpha = min(1, p/q)
+        if torch.rand(1) < torch.min(torch.tensor(1.0), p_val / q):
+            accepted.append(draft_tokens[i])
+        else:
+            # Reject! Resample from residual and stop.
+            break
+            
+    return accepted</code></pre>
+        </section>
+
+        <section>
+            <h2>Conclusion</h2>
+            <p>We are living through a unique moment in computing history where we are memory-bound, not compute-bound. Speculative Decoding is the judo move that uses the weight of the opponent (the massive parameter count) against them.</p>
+
+            <p>By accepting that <strong>reading</strong> (verifying) is parallel and <strong>writing</strong> (generating) is serial, we unlock a future where our AI models are not just bigger, but structurally faster. The "Intern" will become a standard component of every LLM stack.</p>
+
+            <p>The cursor is about to jump. Are you ready?</p>
+        </section>
+
+        <footer>
+            <div class="footer-links">
+                <a href="#" class="mono">Twitter</a>
+                <a href="#" class="mono">Github</a>
+                <a href="#" class="mono">RSS</a>
+            </div>
+            <p class="mono" style="margin-top: 1rem; opacity: 0.5;">&copy; 2025 Rachit Gupta. Built with H100s.</p>
+        </footer>
+
+    </div>
+
+    <!-- VISUALIZATION SCRIPTS -->
+    <script>
+        // --- VIZ 1: THE MEMORY PIPE ---
+        (function() {
+            const canvas = document.getElementById('viz-pipe');
+            const ctx = canvas.getContext('2d');
+            let mode = 'serial';
+            let frame = 0;
+
+            window.setPipeMode = (m) => { mode = m; frame = 0; };
+
+            function draw() {
+                ctx.clearRect(0,0,700,250);
+                frame++;
+                
+                // Draw Hardware
+                // Pipe
+                ctx.fillStyle = '#E0E0E0';
+                ctx.fillRect(50, 100, 400, 50);
+                ctx.fillStyle = '#1A1C1B';
+                ctx.font = '12px JetBrains Mono';
+                ctx.fillText("MEMORY BUS (Limited Bandwidth)", 50, 90);
+                
+                // Turbine
+                ctx.beginPath();
+                ctx.arc(550, 125, 60, 0, Math.PI*2);
+                ctx.strokeStyle = '#1A1C1B';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.fillStyle = '#1A1C1B';
+                ctx.fillText("COMPUTE", 525, 130);
+
+                const cycle = 120;
+                const localT = frame % cycle;
+
+                if(mode === 'serial') {
+                    // Small packet
+                    if (localT < 80) {
+                        let x = 50 + (localT * 5);
+                        ctx.fillStyle = '#999';
+                        ctx.fillRect(x, 115, 20, 20); // Tiny packet
+                    } else {
+                        // Flash
+                        ctx.fillStyle = '#D64000';
+                        ctx.beginPath(); ctx.arc(550, 125, 50, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#fff'; ctx.fillText("1 TOK", 535, 130);
+                    }
+                } else {
+                    // Big packet
+                    if (localT < 80) {
+                        let x = 50 + (localT * 5);
+                        ctx.fillStyle = '#1565C0';
+                        ctx.fillRect(x, 105, 100, 40); // Big packet fills pipe
+                        ctx.fillStyle = '#fff'; ctx.fillText("BATCH K", x+20, 130);
+                    } else {
+                        // Flash
+                        ctx.fillStyle = '#2E7D32';
+                        ctx.beginPath(); ctx.arc(550, 125, 50, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#fff'; ctx.fillText("4 TOKENS", 525, 130);
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // --- VIZ 2: GANTT ---
+        (function() {
+            const canvas = document.getElementById('viz-gantt');
+            const ctx = canvas.getContext('2d');
+            let mode = 'std';
+            let t = 0;
+
+            window.setGanttMode = (m) => {
+                mode = m; 
+                document.getElementById('btn-gantt-std').classList.toggle('active', m==='std');
+                document.getElementById('btn-gantt-spec').classList.toggle('active', m==='spec');
+            };
+
+            function draw() {
+                ctx.clearRect(0,0,700,220);
+                // Grid
+                ctx.strokeStyle = '#eee'; ctx.beginPath(); ctx.moveTo(0,110); ctx.lineTo(700,110); ctx.stroke();
+                
+                t+=2;
+                const cycle = 200;
+                const offset = t % cycle;
+                
+                for(let i=0; i<5; i++) {
+                    let baseX = (i*cycle) - offset + 50;
+                    
+                    if(mode === 'std') {
+                        // Serial: Gray (Mem) -> Orange (Compute)
+                        if(baseX > -50 && baseX < 700) {
+                            ctx.fillStyle = '#BDBDBD';
+                            ctx.fillRect(baseX, 80, 80, 60); // Mem
+                            ctx.fillStyle = '#D64000';
+                            ctx.fillRect(baseX+80, 80, 10, 60); // Compute
+                            
+                            ctx.fillStyle = '#444';
+                            ctx.font = '10px JetBrains Mono';
+                            ctx.fillText("MEM", baseX+25, 115);
+                        }
+                    } else {
+                        // Spec: Green (Drafts) -> Blue (Verify)
+                        // Drafts
+                        for(let k=0; k<3; k++) {
+                            let dx = baseX + (k*30);
+                            if(dx > -50 && dx < 700) {
+                                ctx.fillStyle = '#A5D6A7';
+                                ctx.fillRect(dx, 95, 25, 30);
+                            }
+                        }
+                        // Verify
+                        let vx = baseX + 90;
+                        if(vx > -100 && vx < 700) {
+                            ctx.fillStyle = '#1565C0';
+                            ctx.fillRect(vx, 80, 80, 60);
+                            ctx.fillStyle = '#fff';
+                            ctx.fillText("VERIFY", vx+20, 115);
+                        }
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // --- VIZ 3: REJECTION SAMPLING ---
+        (function() {
+            const canvas = document.getElementById('viz-sampling');
+            const ctx = canvas.getContext('2d');
+            
+            function drawScene(q, p) {
+                ctx.clearRect(0,0,700,300);
+                
+                const w = 100;
+                const h = 200;
+                const x = 300;
+                const y = 250;
+                
+                // Q Bar (Draft)
+                ctx.fillStyle = 'rgba(46, 125, 50, 0.2)';
+                ctx.strokeStyle = '#2E7D32';
+                ctx.lineWidth = 2;
+                ctx.fillRect(x - 60, y - (q*h), w, q*h);
+                ctx.strokeRect(x - 60, y - (q*h), w, q*h);
+                ctx.fillStyle = '#2E7D32';
+                ctx.font = '14px JetBrains Mono';
+                ctx.fillText(`q(x)=${q.toFixed(2)}`, x-55, y+20);
+                ctx.fillText("DRAFT", x-45, y+40);
+
+                // P Bar (Target)
+                ctx.fillStyle = 'rgba(21, 101, 192, 0.2)';
+                ctx.strokeStyle = '#1565C0';
+                ctx.fillRect(x + 60, y - (p*h), w, p*h);
+                ctx.strokeRect(x + 60, y - (p*h), w, p*h);
+                ctx.fillStyle = '#1565C0';
+                ctx.fillText(`p(x)=${p.toFixed(2)}`, x+65, y+20);
+                ctx.fillText("TARGET", x+75, y+40);
+
+                // Result logic
+                let ratio = Math.min(1.0, p/q);
+                let accepted = Math.random() < ratio;
+                if (p >= q) accepted = true; // Always accept if P > Q
+                
+                // Draw Verdict
+                ctx.font = 'bold 20px JetBrains Mono';
+                if(accepted) {
+                    ctx.fillStyle = '#2E7D32';
+                    ctx.fillText("ACCEPTED", 305, 50);
+                    ctx.font = '14px JetBrains Mono';
+                    ctx.fillStyle = '#555';
+                    ctx.fillText(p >= q ? "(p > q : Safe)" : `(Rolled < ${ratio.toFixed(2)})`, 300, 75);
+                } else {
+                    ctx.fillStyle = '#C62828';
+                    ctx.fillText("REJECTED", 305, 50);
+                    ctx.font = '14px JetBrains Mono';
+                    ctx.fillStyle = '#555';
+                    ctx.fillText(`(Rolled > ${ratio.toFixed(2)})`, 300, 75);
+                }
+            }
+
+            window.resampleViz = () => {
+                const q = Math.random() * 0.7 + 0.1; 
+                let p = q + (Math.random() - 0.5);
+                p = Math.max(0.1, Math.min(0.9, p));
+                drawScene(q, p);
+            };
+            window.resampleViz(); // Init
+        })();
+
+        // --- VIZ 4: RACE ---
+        const targetText = "The speculative decoding algorithm allows for massive speedups in inference by separating drafting from verification.";
+        const stdEl = document.getElementById('track-std');
+        const specEl = document.getElementById('track-spec');
+        let raceInterval;
+
+        window.startRace = () => {
+            clearInterval(raceInterval);
+            stdEl.innerHTML = '<span class="cursor"></span>';
+            specEl.innerHTML = '<span class="cursor"></span>';
+            
+            let stdIdx = 0;
+            let specIdx = 0;
+            let isVerifying = false;
+            let tick = 0;
+
+            raceInterval = setInterval(() => {
+                tick++;
+                
+                // Standard: 1 char every 4 ticks
+                if(tick % 4 === 0 && stdIdx < targetText.length) {
+                    stdIdx++;
+                    stdEl.innerHTML = targetText.substring(0, stdIdx) + '<span class="cursor"></span>';
+                }
+
+                // Speculative: Burst logic
+                if(specIdx < targetText.length && !isVerifying) {
+                    isVerifying = true;
+                    // Latency wait
+                    setTimeout(() => {
+                        let jump = Math.floor(Math.random() * 5) + 3; // 3-7 chars
+                        let chunk = targetText.substring(specIdx, specIdx + jump);
+                        let prev = targetText.substring(0, specIdx);
+                        
+                        specEl.innerHTML = prev + `<span class="chunk-draft">${chunk}</span><span class="cursor"></span>`;
+                        specIdx += chunk.length;
+                        isVerifying = false;
+                    }, 400); // 400ms = approx 8 ticks
+                }
+
+                if(stdIdx >= targetText.length && specIdx >= targetText.length) clearInterval(raceInterval);
+            }, 50);
+        };
+    </script>
+    
+    <!-- Prism JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+</body>
+</html>

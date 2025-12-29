@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mixture of Experts: Routing & Load Balancing | Rachit Gupta</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
+
+    <!-- MATHJAX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- PRISM JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* --- DESIGN SYSTEM: PAPER & INK --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+            --c-code-bg: #EBE9DE;
+            --c-blue: #2B6CB0;
+            --c-green: #2F855A;
+            
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+            
+            --max-width: 760px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px;
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3, h4 {
+            color: var(--c-ink);
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        h1 { font-size: 3.2rem; letter-spacing: -0.03em; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.8rem; margin-top: 3.5rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--c-grid); padding-bottom: 0.5rem; letter-spacing: -0.01em; }
+        h3 { font-family: var(--f-mono); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-ink-soft); margin-top: 2.5rem; margin-bottom: 0.8rem; font-weight: 700; }
+        p { margin-bottom: 1.5rem; text-align: justify; hyphens: auto; }
+        
+        a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--c-grid); transition: all 0.2s; }
+        a:hover { color: var(--c-accent); border-color: var(--c-accent); }
+
+        blockquote { border-left: 3px solid var(--c-accent); padding-left: 1.5rem; margin: 2rem 0; font-style: italic; color: var(--c-ink-soft); background: rgba(0,0,0,0.03); padding: 1.5rem; }
+
+        pre { background: var(--c-code-bg) !important; border: 1px solid var(--c-grid); border-radius: 4px; padding: 1.5rem !important; font-size: 0.8rem !important; font-family: var(--f-mono) !important; margin: 2rem 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); overflow-x: auto; }
+        :not(pre) > code { font-family: var(--f-mono); font-size: 0.85em; background: rgba(0,0,0,0.04); padding: 0.1em 0.3em; border-radius: 3px; color: var(--c-accent); }
+
+        /* --- LAYOUT --- */
+        nav { position: fixed; top: 0; left: 0; right: 0; padding: 1.5rem 2rem; background: rgba(242, 240, 230, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; z-index: 1000; }
+        .nav-logo { font-family: var(--f-mono); font-weight: 700; letter-spacing: -0.05em; font-size: 1.2rem; }
+        .nav-items { display: flex; gap: 2rem; font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; }
+        .nav-items a { border: none; opacity: 0.6; }
+        .nav-items a:hover, .nav-items a.active { opacity: 1; color: var(--c-accent); }
+
+        .container { max-width: var(--max-width); margin: 0 auto; padding: 0 1.5rem; }
+        header { margin-top: 180px; margin-bottom: 80px; }
+        .meta { font-family: var(--f-mono); font-size: 0.8rem; color: var(--c-ink-soft); display: flex; gap: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--c-grid); padding-top: 1rem; align-items: center; }
+
+        /* --- VISUALIZATION WRAPPERS --- */
+        .viz-wrapper { background: #fff; border: 1px solid var(--c-grid); border-radius: 4px; padding: 20px; margin: 3.5rem 0; box-shadow: 0 8px 30px rgba(0,0,0,0.04); position: relative; }
+        
+        /* Fixed: Min-height ensures visibility before JS loads */
+        canvas { display: block; width: 100%; background: #fafafa; min-height: 300px; cursor: crosshair; }
+        
+        .viz-caption { font-family: var(--f-mono); font-size: 0.75rem; color: var(--c-ink-soft); margin-top: 15px; text-align: center; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+        .viz-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .viz-btn { background: transparent; border: 1px solid var(--c-grid); padding: 6px 14px; font-family: var(--f-mono); font-size: 0.7rem; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-radius: 3px; color: var(--c-ink-soft); }
+        .viz-btn:hover { border-color: var(--c-ink); color: var(--c-ink); }
+        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+
+        footer { margin-top: 8rem; padding: 4rem 0; border-top: 1px solid var(--c-grid); font-family: var(--f-mono); font-size: 0.8rem; color: var(--c-ink-soft); display: flex; justify-content: space-between; }
+        .fade-up { animation: fadeInUp 0.8s ease forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">RG.</div>
+        <div class="nav-items">
+            <a href="#" class="active">Essays</a>
+            <a href="#">Research</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="fade-up">
+            <div style="font-family: var(--f-mono); text-transform:uppercase; color:var(--c-accent); font-size: 0.8rem; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                Deep Learning Systems
+            </div>
+            <h1>The Mixture of Experts:<br>Routing & Load Balancing</h1>
+            <div class="meta">
+                <img src="https://ui-avatars.com/api/?name=Rachit+Gupta&background=1A1C1B&color=fff&size=40" alt="Rachit Gupta" style="border-radius: 50%; width: 40px; height: 40px;">
+                <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                    <span><strong style="color:var(--c-ink)">Rachit Gupta</strong></span>
+                    <span style="font-size: 0.75rem; opacity: 0.7;">Research Engineer</span>
+                </div>
+                <span style="margin-left: auto;">Dec 04, 2025 • 25 min read</span>
+            </div>
+        </header>
+
+        <article class="fade-up" style="animation-delay: 0.2s">
+            <p>
+                In the history of computation, we have oscillated between two paradigms: the generalist and the specialist. The CPU is a generalist; it can calculate a spreadsheet or render a video, but it does neither with maximum efficiency. The ASIC is a specialist; it mines Bitcoin perfectly but fails at everything else.
+            </p>
+
+            <p>
+                For the last decade, Deep Learning has been stuck in the generalist phase. We built <strong>Dense Models</strong>. Whether it was GPT-3 or Llama-2, we treated the neural network as a monolith. If you asked the model to define "The," every single one of its 70 billion parameters would activate, consume VRAM bandwidth, and burn energy. It is akin to lighting up the entire city of New York just to find your keys in the kitchen.
+            </p>
+
+            <p>
+                This inefficiency is the bottleneck of the Scaling Laws. We cannot keep making models larger if "larger" implies "more expensive to run."
+            </p>
+
+            <p>
+                Enter the <strong>Mixture of Experts (MoE)</strong>. This architecture—championed by Google's Gemini, Mistral's Mixtral, and most recently, <strong>DeepSeek-V3</strong>—shifts the paradigm. It builds a council of specialists rather than a single god.
+            </p>
+
+            <blockquote>
+                <strong>Core Thesis:</strong> Don't build one God; build a council of experts. Intelligence is not just about having more neurons; it is about knowing which neurons to ignore.
+            </blockquote>
+
+            <h2>I. The Manifold Hypothesis & The Router</h2>
+
+            <p>
+                To understand how an MoE works, we must first visualize the high-dimensional space in which language exists. This is the <strong>Manifold Hypothesis</strong>. Tokens (words/concepts) are not random; they live on specific geometric structures. Mathematical tokens form a cluster; poetic tokens form another.
+            </p>
+
+            <p>
+                In a standard Dense Transformer, the Feed-Forward Network (FFN) must learn to process <em>all</em> regions of this manifold. In an MoE, we split the FFN into \( N \) distinct experts, say \( \{E_1, \dots, E_8\} \).
+            </p>
+
+            <p>
+                The job of the <strong>Router</strong> (or Gating Network) is to classify the incoming token vector \( x \) and map it to the correct manifold region. Think of the Router as a Triage Nurse at a hospital.
+            </p>
+
+            <!-- VIZ A: HOSPITAL METAPHOR -->
+            <div class="viz-wrapper">
+                <canvas id="viz-hospital"></canvas>
+                <div class="viz-caption">
+                    <strong>Figure A: The Hospital Metaphor.</strong> The Router (Nurse) analyzes the semantic features of the token (Patient). Math features route to Cardiology; Creative features route to Poetry.
+                </div>
+            </div>
+
+            <p>
+                Mathematically, the router projects the token into a lower-dimensional "Expert Space."
+            </p>
+
+            $$ h(x) = x \cdot W_g $$
+            $$ p(x) = \text{Softmax}(\text{TopK}(h(x))) $$
+
+            <p>
+                The dot product \( x \cdot W_{g,i} \) measures the <strong>cosine similarity</strong> between the token and Expert \( i \). Below is a visualization of this process. Initially, the router is random, and tokens are scattered. As training progresses, the router learns to separate the manifold, sending math tokens (Orange) to Expert A and code tokens (Blue) to Expert B.
+            </p>
+
+            <!-- VIZ B: SCATTER PLOT -->
+            <div class="viz-wrapper">
+                <div class="viz-controls">
+                    <button class="viz-btn active" id="btn-scatter-random" onclick="window.vizScatter.setMode('random')">A. Random Init</button>
+                    <button class="viz-btn" id="btn-scatter-trained" onclick="window.vizScatter.setMode('trained')">B. Trained Router</button>
+                </div>
+                <canvas id="viz-scatter"></canvas>
+                <div class="viz-caption">
+                    <strong>Figure B: Expert Utilization Manifold.</strong> <span style="color:#D64000">Orange</span> = Math, <span style="color:#2B6CB0">Blue</span> = Code. In a trained MoE (B), the router creates a decision boundary, clustering similar tokens to specialized experts.
+                </div>
+            </div>
+
+            <h2>II. The Load Balancing Crisis</h2>
+
+            <p>
+                If the router is simply optimizing for accuracy, we run into a catastrophic failure mode known as <strong>Routing Collapse</strong> (or Mode Collapse).
+            </p>
+
+            <p>
+                Neural networks are subject to "Rich-get-Richer" dynamics.
+                <ol>
+                    <li>Suppose Expert 1 initializes slightly better for common words like "the".</li>
+                    <li>The router sends more tokens to Expert 1.</li>
+                    <li>Expert 1 receives more gradient updates (\( \nabla \theta \)) and learns faster.</li>
+                    <li>Expert 1 becomes even better, so the router sends it <em>even more</em> tokens.</li>
+                </ol>
+            </p>
+
+            <p>
+                Eventually, Expert 1 processes 100% of the tokens (becoming a dense model), while Experts 2-8 sit idle. In a distributed training setup across 8 GPUs, this means 1 GPU is melting while 7 GPUs are doing nothing.
+            </p>
+
+            <h3>Capacity Factors & Token Dropping</h3>
+            <p>
+                In production systems, each expert has a buffer size limit defined by the <strong>Capacity Factor</strong> (usually ~1.1x uniform load). If Expert 1 is overloaded, it performs <strong>Token Dropping</strong>—it simply ignores the excess tokens. The model effectively stops reading parts of the input, destroying performance.
+            </p>
+
+            <h2>III. DeepSeek & Auxiliary-Loss-Free Balancing</h2>
+
+            <p>
+                DeepSeek-V3 introduces a paradigm shift. They argue that we should not pollute the gradient descent with load balancing (which causes <strong>Gradient Conflict</strong>). Instead, they treat load balancing as a <strong>Control Theory</strong> problem.
+            </p>
+
+            <p>
+                They modify the gating function by adding a bias term \( b_i \) that is <em>not learned via backprop</em>.
+            </p>
+
+            $$ g_i(x) = \text{TopK}( (x \cdot W_g)_i + b_i ) $$
+
+            <p>
+                The bias \( b_i \) acts as a <strong>PID Controller</strong>.
+                <ul>
+                    <li>If Expert \( i \) is overloaded, we decrease \( b_i \). This effectively creates a "repulsive force," raising the threshold required to enter that expert.</li>
+                    <li>If Expert \( i \) is underloaded, we increase \( b_i \), creating an attractive force.</li>
+                </ul>
+            </p>
+
+            <!-- VIZ C: PEGBOARD -->
+            <div class="viz-wrapper">
+                <div class="viz-controls">
+                    <button class="viz-btn active" id="btn-peg-deepseek" onclick="window.vizPegboard.toggleBias(true)">DeepSeek (Balanced)</button>
+                    <button class="viz-btn" id="btn-peg-naive" onclick="window.vizPegboard.toggleBias(false)">Naive (Collapse)</button>
+                </div>
+                <canvas id="viz-pegboard"></canvas>
+                <div class="viz-caption">
+                    <strong>Figure C: Dynamic Routing Simulator.</strong>
+                    <br><strong>DeepSeek Mode:</strong> Overloaded buckets exert a "Repulsion Bias" (Red Field), forcing tokens to their second-best choice.
+                    <br><strong>Naive Mode:</strong> Popular experts overflow; the system collapses.
+                </div>
+            </div>
+
+            <h2>IV. Granularity & Shared Experts</h2>
+
+            <p>
+                Another critical innovation in DeepSeek and Mixtral is the shift from Coarse-Grained Experts (e.g., 8 big experts) to <strong>Fine-Grained Experts</strong> (e.g., 64 or 256 small experts).
+            </p>
+
+            <p>
+                However, this introduces the "Common Knowledge Problem." Concepts like grammar, basic verbs, and prepositions are needed by <em>every</em> expert. It is redundant to store the weights for the word "is" inside the Physics Expert, the Code Expert, and the Poetry Expert.
+            </p>
+
+            <p>
+                DeepSeek solves this with <strong>Shared Experts</strong>. The architecture allocates a fixed number of experts that are <em>always active</em> for every token, alongside the routed experts.
+            </p>
+
+            $$ y = \text{Shared}(x) + \sum_{i \in \text{TopK}} \text{Routed}_i(x) $$
+
+            <p>
+                This aligns with the <strong>Pareto Principle</strong> of language: 20% of the knowledge (grammar, syntax) is used 80% of the time. We put that in the Shared Expert (Dense). The remaining 80% (long-tail facts) goes into the Routed Experts (Sparse).
+            </p>
+
+            <!-- VIZ D: TRACE -->
+            <div class="viz-wrapper">
+                <div class="viz-controls">
+                    <button class="viz-btn active" id="btn-trace-stem" onclick="window.vizTrace.setType('stem')">Trace: Math Token</button>
+                    <button class="viz-btn" id="btn-trace-lit" onclick="window.vizTrace.setType('lit')">Trace: Poetry Token</button>
+                </div>
+                <canvas id="viz-trace"></canvas>
+                <div class="viz-caption">
+                    <strong>Figure D: Layer-wise Activation Trace.</strong> A single token's journey through 6 layers. 
+                    <br>Note that Expert 0 (Leftmost) is a <strong>Shared Expert</strong> and is active at every step. The token "hops" between specialized experts (Columns 1-7) depending on context.
+                </div>
+            </div>
+
+            <h2>V. Conclusion</h2>
+
+            <p>
+                The implications of MoE architectures extend far beyond just saving electricity. They represent a fundamental shift in how we model intelligence. We are moving away from the "Blank Slate" dense matrix toward a structured, hierarchical system.
+            </p>
+
+            <p>
+                The Monolith is dead. Long live the Council.
+            </p>
+
+        </article>
+
+        <footer>
+            <div style="font-weight:700; margin-bottom:1rem;">RG.</div>
+            <div class="nav-items" style="gap:1rem;">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">RSS</a>
+            </div>
+            <div style="margin-top:2rem; opacity:0.5; font-size:0.75rem;">© 2025 Rachit Gupta. All rights reserved.</div>
+        </footer>
+    </div>
+
+    <!-- === VISUALIZATION ENGINE === -->
+    <script>
+        /**
+         * Visualization Engine for MoE Article
+         * 
+         * FIXES IMPLEMENTED:
+         * 1. Replaced ctx.roundRect (unsupported in some browsers) with a manual path drawing polyfill.
+         * 2. Fixed High-DPI scaling bug by resetting transform before scaling.
+         * 3. Used window.load event to ensure DOM is ready before init.
+         */
+
+        const COLORS = {
+            paper: '#F2F0E6', ink: '#1A1C1B', accent: '#D64000',
+            blue: '#2B6CB0', green: '#2F855A', grid: '#D1CEC4'
+        };
+
+        // --- CORE: Canvas Setup with Polyfills ---
+        function initViz(id, heightVal) {
+            const canvas = document.getElementById(id);
+            if(!canvas) return null;
+            
+            const ctx = canvas.getContext('2d');
+            let w, h;
+
+            // Polyfill for Round Rect to prevent crashes
+            ctx.drawRoundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.beginPath();
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+            };
+
+            function resize() {
+                const parentW = canvas.parentElement.clientWidth || 600;
+                const dpr = window.devicePixelRatio || 1;
+                
+                canvas.style.width = parentW + 'px';
+                canvas.style.height = heightVal + 'px';
+                canvas.width = parentW * dpr;
+                canvas.height = heightVal * dpr;
+                
+                // CRITICAL FIX: Reset transform to avoid exponential scaling on resize
+                ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                ctx.scale(dpr, dpr);
+                
+                w = parentW; h = heightVal;
+                return {w, h};
+            }
+            
+            // Initial call
+            resize();
+            window.addEventListener('resize', resize);
+            
+            return { canvas, ctx, getDims: () => ({w, h}) };
+        }
+
+        // ==========================================
+        // VIZ A: HOSPITAL METAPHOR
+        // ==========================================
+        window.vizHospital = {
+            init: function() {
+                const sys = initViz('viz-hospital', 320);
+                if(!sys) return;
+                
+                let particles = [];
+                
+                function loop() {
+                    const {w, h} = sys.getDims();
+                    const ctx = sys.ctx;
+                    ctx.clearRect(0,0,w,h);
+
+                    const router = {x: 80, y: h/2};
+                    const experts = [
+                        {x: w-120, y: h*0.25, label: "Math", color: COLORS.accent},
+                        {x: w-120, y: h*0.50, label: "Code", color: COLORS.blue},
+                        {x: w-120, y: h*0.75, label: "Art", color: COLORS.green}
+                    ];
+
+                    // Draw Paths
+                    experts.forEach(e => {
+                        ctx.beginPath();
+                        ctx.moveTo(router.x, router.y);
+                        ctx.bezierCurveTo(w/2, router.y, w/2, e.y, e.x, e.y);
+                        ctx.strokeStyle = '#e0e0e0'; ctx.stroke();
+
+                        // Expert Boxes
+                        ctx.fillStyle = "#fff"; ctx.strokeStyle = e.color; ctx.lineWidth = 2;
+                        ctx.drawRoundRect(e.x-30, e.y-15, 60, 30, 4);
+                        ctx.fill(); ctx.stroke();
+                        
+                        ctx.fillStyle = e.color; ctx.textAlign = "center";
+                        ctx.font = "bold 10px JetBrains Mono";
+                        ctx.fillText(e.label, e.x, e.y+4);
+                    });
+
+                    // Router Node
+                    ctx.beginPath(); ctx.arc(router.x, router.y, 25, 0, Math.PI*2);
+                    ctx.fillStyle = COLORS.ink; ctx.fill();
+                    ctx.fillStyle = "#fff"; ctx.font="bold 12px JetBrains Mono"; ctx.textAlign="center";
+                    ctx.fillText("R", router.x, router.y+4);
+
+                    // Particles
+                    if(Math.random() < 0.03) {
+                        const type = Math.floor(Math.random()*3);
+                        particles.push({t:0, type:type, color:experts[type].color, dest:experts[type]});
+                    }
+
+                    for(let i=particles.length-1; i>=0; i--) {
+                        let p = particles[i];
+                        p.t += 0.008;
+                        if(p.t >= 1) { particles.splice(i,1); continue; }
+
+                        const inv = 1-p.t;
+                        const c1 = {x:w/2, y:router.y}, c2 = {x:w/2, y:p.dest.y};
+                        const x = Math.pow(inv,3)*router.x + 3*Math.pow(inv,2)*p.t*c1.x + 3*inv*Math.pow(p.t,2)*c2.x + Math.pow(p.t,3)*p.dest.x;
+                        const y = Math.pow(inv,3)*router.y + 3*Math.pow(inv,2)*p.t*c1.y + 3*inv*Math.pow(p.t,2)*c2.y + Math.pow(p.t,3)*p.dest.y;
+
+                        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2);
+                        ctx.fillStyle = p.color; ctx.fill();
+                    }
+                    requestAnimationFrame(loop);
+                }
+                loop();
+            }
+        };
+
+        // ==========================================
+        // VIZ B: SCATTER
+        // ==========================================
+        window.vizScatter = {
+            mode: 'random',
+            init: function() {
+                const sys = initViz('viz-scatter', 350);
+                if(!sys) return;
+                
+                let particles = [];
+                for(let i=0; i<150; i++) {
+                    const type = Math.random() > 0.5 ? 'math' : 'code';
+                    particles.push({
+                        x: 100, y: 100, 
+                        type: type,
+                        color: type === 'math' ? COLORS.accent : COLORS.blue,
+                        noise: { x: Math.random(), y: Math.random() }
+                    });
+                }
+
+                const loop = () => {
+                    const {w, h} = sys.getDims();
+                    const ctx = sys.ctx;
+                    ctx.clearRect(0, 0, w, h);
+
+                    // Grid
+                    ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(30, 30); ctx.lineTo(30, h-30); ctx.lineTo(w-30, h-30); ctx.stroke();
+
+                    // Dots
+                    particles.forEach(p => {
+                        let tx, ty;
+                        if(this.mode === 'random') {
+                            tx = p.noise.x * (w - 60) + 30;
+                            ty = p.noise.y * (h - 60) + 30;
+                        } else {
+                            if(p.type === 'math') {
+                                tx = (w * 0.3) + (p.noise.x - 0.5) * 120;
+                                ty = (h * 0.5) + (p.noise.y - 0.5) * 120;
+                            } else {
+                                tx = (w * 0.7) + (p.noise.x - 0.5) * 120;
+                                ty = (h * 0.5) + (p.noise.y - 0.5) * 120;
+                            }
+                        }
+                        p.x += (tx - p.x) * 0.08;
+                        p.y += (ty - p.y) * 0.08;
+
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+                    });
+
+                    if(this.mode === 'trained') {
+                        ctx.fillStyle = COLORS.ink; ctx.font = "600 12px JetBrains Mono"; ctx.textAlign = "center";
+                        ctx.fillText("Expert A: Math", w*0.3, h - 10);
+                        ctx.fillText("Expert B: Code", w*0.7, h - 10);
+                    }
+                    requestAnimationFrame(loop);
+                };
+                loop();
+            },
+            setMode: function(m) {
+                this.mode = m;
+                document.getElementById('btn-scatter-random').classList.toggle('active', m==='random');
+                document.getElementById('btn-scatter-trained').classList.toggle('active', m==='trained');
+            }
+        };
+
+        // ==========================================
+        // VIZ C: PEGBOARD
+        // ==========================================
+        window.vizPegboard = {
+            bias: true,
+            init: function() {
+                const sys = initViz('viz-pegboard', 350);
+                if(!sys) return;
+
+                const EXPERTS = 4;
+                let buckets = [];
+                let balls = [];
+                for(let i=0; i<EXPERTS; i++) buckets.push({count: 0});
+
+                const loop = () => {
+                    const {w, h} = sys.getDims();
+                    const ctx = sys.ctx;
+                    ctx.clearRect(0,0,w,h);
+
+                    const bw = w / EXPERTS;
+
+                    // Buckets
+                    buckets.forEach((b, i) => {
+                        if(Math.random()<0.05 && b.count>0) b.count--;
+                        const isOver = b.count > 12;
+                        const bx = i * bw;
+                        
+                        ctx.fillStyle = isOver ? '#FFF5F5' : '#FAFAFA';
+                        ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 2;
+                        ctx.drawRoundRect(bx+5, h-120, bw-10, 120, 0);
+                        ctx.fill(); ctx.stroke();
+                        
+                        const loadH = Math.min(b.count * 6, 120);
+                        ctx.fillStyle = isOver ? COLORS.accent : COLORS.blue;
+                        ctx.fillRect(bx+5, h-loadH, bw-10, loadH);
+                        
+                        if(this.bias && isOver) {
+                            ctx.fillStyle = COLORS.accent; ctx.textAlign='center'; ctx.font="10px JetBrains Mono";
+                            ctx.fillText("REPEL", bx+bw/2, h-130);
+                        }
+                    });
+
+                    // Balls
+                    if(Math.random() < 0.15) {
+                        let target = 1;
+                        if(Math.random() < 0.3) target = Math.floor(Math.random()*EXPERTS);
+                        balls.push({
+                            x: Math.random()*w, y: -10, vx: (Math.random()-0.5), vy: 2,
+                            target: target, color: target===1 ? COLORS.accent : COLORS.blue
+                        });
+                    }
+
+                    for(let i=balls.length-1; i>=0; i--) {
+                        let b = balls[i];
+                        b.vy += 0.2; b.y += b.vy; b.x += b.vx;
+                        
+                        const bucketIdx = b.target;
+                        const bucket = buckets[bucketIdx];
+                        const bx = bucketIdx * bw;
+                        const cx = bx + bw/2;
+
+                        if(this.bias && bucket.count > 12) {
+                            const dir = b.x < cx ? -1 : 1;
+                            b.vx += dir * 0.4; // Repulsion
+                        } else {
+                            b.vx += (cx - b.x) * 0.01; // Attraction
+                        }
+
+                        if(b.y > h-10) {
+                            const idx = Math.floor(b.x / bw);
+                            if(idx >= 0 && idx < EXPERTS) buckets[idx].count++;
+                            balls.splice(i,1);
+                        } else {
+                            ctx.fillStyle = b.color;
+                            ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
+                        }
+                    }
+                    requestAnimationFrame(loop);
+                };
+                loop();
+            },
+            toggleBias: function(v) {
+                this.bias = v;
+                document.getElementById('btn-peg-deepseek').classList.toggle('active', v);
+                document.getElementById('btn-peg-naive').classList.toggle('active', !v);
+            }
+        };
+
+        // ==========================================
+        // VIZ D: TRACE
+        // ==========================================
+        window.vizTrace = {
+            type: 'stem',
+            init: function() {
+                const sys = initViz('viz-trace', 300);
+                if(!sys) return;
+
+                const loop = () => {
+                    const {w, h} = sys.getDims();
+                    const ctx = sys.ctx;
+                    ctx.clearRect(0,0,w,h);
+                    
+                    const LAYERS = 6; const EXPERTS = 8;
+                    const cellW = (w - 60) / EXPERTS;
+                    const cellH = (h - 40) / LAYERS;
+                    
+                    const path = this.type === 'stem' ? [0, 2, 0, 5, 2, 0] : [0, 7, 3, 0, 7, 3];
+
+                    for(let l=0; l<LAYERS; l++) {
+                        ctx.fillStyle = COLORS.ink_soft; ctx.textAlign='right'; ctx.font="10px JetBrains Mono";
+                        ctx.fillText(`L${l+1}`, 30, 20+l*cellH+cellH/2);
+                        
+                        for(let e=0; e<EXPERTS; e++) {
+                            const x = 40+e*cellW; const y = 20+l*cellH;
+                            const isShared = (e===0);
+                            const isRouted = (path[l]===e);
+                            
+                            ctx.strokeStyle = '#e0e0e0'; ctx.strokeRect(x,y,cellW-4,cellH-4);
+                            
+                            if(isShared || isRouted) {
+                                ctx.fillStyle = isShared ? '#999' : (this.type==='stem'?COLORS.accent:COLORS.blue);
+                                ctx.globalAlpha = isShared ? 0.3 : 1.0;
+                                ctx.fillRect(x,y,cellW-4,cellH-4);
+                                ctx.globalAlpha = 1.0;
+                                if(isShared && l===0) {
+                                    ctx.fillStyle='#000'; ctx.textAlign='center'; ctx.fillText('Shared', x+cellW/2, y-5);
+                                }
+                            }
+                        }
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.strokeStyle = this.type==='stem'?COLORS.accent:COLORS.blue;
+                    ctx.lineWidth = 2;
+                    let first = true;
+                    for(let l=0; l<LAYERS; l++) {
+                        const e = path[l];
+                        const x = 40 + e*cellW + cellW/2; 
+                        const y = 20 + l*cellH + cellH/2;
+                        if(first) { ctx.moveTo(x,y); first=false; } else ctx.lineTo(x,y);
+                    }
+                    ctx.stroke();
+
+                    requestAnimationFrame(loop);
+                };
+                loop();
+            },
+            setType: function(t) {
+                this.type = t;
+                document.getElementById('btn-trace-stem').classList.toggle('active', t==='stem');
+                document.getElementById('btn-trace-lit').classList.toggle('active', t==='lit');
+            }
+        };
+
+        // --- BOOTSTRAP ---
+        window.addEventListener('load', () => {
+            window.vizHospital.init();
+            window.vizScatter.init();
+            window.vizPegboard.init();
+            window.vizTrace.init();
+        });
+    </script>
+</body>
+</html>

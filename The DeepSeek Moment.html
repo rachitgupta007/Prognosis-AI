@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The DeepSeek Moment: Multi-Head Latent Attention | Rachit Gupta</title>
+    
+    <!-- Fonts: Newsreader (Serif) and JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            /* Design System provided */
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+            
+            /* Visualization Colors */
+            --c-viz-blue: #0047AB; 
+            --c-viz-red: #D64000;  
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: fadeInUp 0.8s var(--easing-sharp) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* --- UTILITY --- */
+        .mono {
+            font-family: var(--f-mono);
+            letter-spacing: -0.03em;
+            font-size: 0.85rem;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .caps {
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-family: var(--f-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+
+        a:hover {
+            border-color: var(--c-accent);
+            color: var(--c-accent);
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid rgba(26, 28, 27, 0.05);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            font-family: var(--f-mono);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.6;
+            border: none;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            opacity: 1;
+            color: var(--c-accent);
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 140px 24px 120px 24px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3, h4 {
+            font-family: var(--f-serif);
+            font-weight: 600;
+            color: var(--c-ink);
+            margin-top: 2.5em;
+            margin-bottom: 0.8em;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+
+        h2 { font-size: 2rem; border-bottom: 1px solid var(--c-grid); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.4rem; font-style: italic; color: var(--c-ink-soft); }
+
+        p { margin-bottom: 1.5em; }
+
+        .author-pill {
+            background: var(--c-ink);
+            color: var(--c-paper);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+        }
+
+        /* --- CODE & MATH --- */
+        pre {
+            background: #eae8dc;
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--c-grid);
+            overflow-x: auto;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            margin: 2rem 0;
+        }
+        
+        .math-block {
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            border-radius: 4px;
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        /* --- VISUALIZATIONS --- */
+        .viz-container {
+            margin: 3rem 0;
+            border: 1px solid var(--c-ink);
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 2px;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .viz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem; border-bottom: 1px dotted var(--c-grid); padding-bottom: 0.5rem;
+        }
+        .viz-title { font-family: var(--f-mono); font-weight: 700; font-size: 0.9rem; text-transform: uppercase; color: var(--c-ink-soft); }
+
+        canvas { display: block; width: 100%; max-width: 100%; background: #fff; }
+
+        .viz-controls {
+            display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;
+        }
+
+        .viz-btn {
+            background: transparent; border: 1px solid var(--c-grid); padding: 0.5rem 1rem;
+            font-family: var(--f-mono); font-size: 0.8rem; cursor: pointer; color: var(--c-ink-soft);
+            transition: all 0.2s;
+        }
+        .viz-btn:hover { border-color: var(--c-ink); color: var(--c-ink); }
+        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+        
+        .caption {
+            font-family: var(--f-mono); font-size: 0.8rem; color: var(--c-ink-soft);
+            margin-top: 1rem; text-align: center; border-top: 1px dotted var(--c-grid); padding-top: 0.5rem;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 6rem 3rem;
+            border-top: 1px solid var(--c-grid);
+            display: grid; grid-template-columns: 1fr 1fr;
+            font-family: var(--f-mono); font-size: 0.85rem; color: var(--c-ink-soft);
+            margin-top: 6rem;
+        }
+        .footer-links { display: flex; gap: 2rem; justify-content: flex-end; }
+
+        /* CITATION POPOVER */
+        .citation {
+            vertical-align: super; font-size: 0.7em; color: var(--c-accent);
+            cursor: pointer; margin-left: 2px; font-family: var(--f-mono); border: none;
+        }
+        
+        .popover {
+            position: absolute; background: var(--c-ink); color: var(--c-paper);
+            padding: 1rem; border-radius: 4px; width: 300px; font-size: 0.85rem;
+            font-family: var(--f-mono); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            opacity: 0; pointer-events: none; transition: opacity 0.2s; line-height: 1.4;
+        }
+        .popover.visible { opacity: 1; pointer-events: auto; }
+
+        /* HEADER META */
+        .meta-header {
+            display: flex; align-items: center; gap: 2rem;
+            margin-bottom: 4rem; font-family: var(--f-mono); font-size: 0.85rem; color: var(--c-ink-soft);
+            border-top: 1px solid var(--c-grid); padding-top: 2rem; margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RG.</div>
+        <div class="nav-links">
+            <a href="#" class="active">Engineering</a>
+            <a href="#">Research</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="animate-enter">
+            <h1>The DeepSeek Moment: Multi-Head Latent Attention</h1>
+            
+            <div class="meta-header delay-1">
+                <span class="author-pill">By Rachit Gupta</span>
+                <span>Dec 03, 2025</span>
+                <span>25 min read</span>
+                <span style="margin-left:auto; color:var(--c-accent); font-weight: 700;">System Architecture</span>
+            </div>
+        </header>
+
+        <article class="animate-enter delay-2">
+            <p>
+                There is a concept in High-Performance Computing called <strong>Arithmetic Intensity</strong>. It is the ratio of floating-point operations (FLOPs) performed to bytes of memory moved. In the world of silicon, math is cheap. Moving data is expensive.
+            </p>
+            <p>
+                If you are training a model, your intensity is high. You load a batch of weights and grind through backward propagation, performing massive matrix multiplications. But if you are <em>serving</em> a model—generating text token-by-token—your intensity plummets. You are essentially fetching gigabytes of memory just to perform a handful of multiplications.
+            </p>
+            <p>
+                This is the context in which <strong>DeepSeek-V3</strong> arrived. While the industry was fixated on Mixture-of-Experts (MoE) routing strategies, DeepSeek executed a fundamental redesign of the Transformer's memory hierarchy. They didn't just optimize the software; they changed the linear algebra of the attention mechanism.
+            </p>
+            <p>
+                The result is <strong>Multi-Head Latent Attention (MLA)</strong>. It compresses the Key-Value (KV) Cache by <strong>93.3%</strong> compared to standard Llama-3 architectures <span class="citation" data-cit="DeepSeek-V2/V3 Technical Reports">[1]</span>. This allows a 128k context window to fit comfortably on a single node, driving inference costs down to a startling $0.14 per million tokens.
+            </p>
+            <p>
+                In this post, we will derive MLA from first principles. We will move beyond the marketing hype and look at the tensors, the projection matrices, and the specific "low-rank" trick that allows DeepSeek to store a library in a backpack.
+            </p>
+
+            <div style="height: 1px; background: var(--c-grid); margin: 4rem 0;"></div>
+
+            <h3>01 — The Systems Engineering Reality</h3>
+            <h2>The Memory Wall</h2>
+
+            <p>
+                To understand why MLA is such a big deal, we have to stop thinking like Data Scientists ("how low is the loss?") and start thinking like Systems Engineers ("where is the latency coming from?").
+            </p>
+            <p>
+                In an autoregressive Language Model (LLM), generating the next token requires attending to all previous tokens. To avoid recomputing the past, we cache the <strong>Key</strong> ($K$) and <strong>Value</strong> ($V$) vectors.
+            </p>
+            <p>
+                Let's calculate the cost of this cache. For a standard Multi-Head Attention (MHA) model like Llama-3 70B:
+            </p>
+            
+            <div class="math-block">
+                $$ \text{Cache}_{\text{token}} = 2 \times n_{\text{layers}} \times n_{\text{heads}} \times d_{\text{head}} \times P_{\text{bytes}} $$
+            </div>
+
+            <p>
+                Plugging in the numbers: 80 layers, 64 heads, 128 dimensions per head, and 2 bytes (BF16) precision.
+            </p>
+            <div class="math-block">
+                $$ 2 \times 80 \times 64 \times 128 \times 2 \approx 2.6 \text{ MB per token} $$
+            </div>
+
+            <p>
+                2.6 MB doesn't sound like much until you scale it to a <strong>128k context window</strong>. That single user session requires <strong>332 GB</strong> of VRAM. An NVIDIA H100 has 80GB of memory. You would need a cluster of 5 GPUs just to store the <em>history</em> of one conversation, before even loading the model weights.
+            </p>
+
+            <!-- VIZ 1: MEMORY CALCULATOR -->
+            <div class="viz-container">
+                <div class="viz-header">
+                    <span class="viz-title">Interactive: The Memory Wall</span>
+                    <span class="mono">LIVE SIMULATION</span>
+                </div>
+                <canvas id="memoryCanvas" width="700" height="350"></canvas>
+                <div class="viz-controls" style="flex-direction: column; align-items: center;">
+                    <label class="mono">Context Length: <span id="contextVal" style="color:var(--c-accent)">128,000</span> tokens</label>
+                    <input type="range" id="contextSlider" min="1000" max="128000" value="128000" step="1000" style="width: 100%; max-width: 400px; accent-color: var(--c-accent);">
+                </div>
+                <div class="caption">Drag the slider. Note how standard MHA (Red) explodes past single-GPU capacity.</div>
+            </div>
+
+            <p>
+                The industry has fought this with <strong>Multi-Query Attention (MQA)</strong> (forcing all heads to share one KV projection) and <strong>Grouped-Query Attention (GQA)</strong> (sharing KV among groups of heads). GQA is the current standard (used in Llama-3), offering roughly an 8x reduction.
+            </p>
+            <p>
+                But DeepSeek needed more. They needed a reduction that would make the cache almost negligible.
+            </p>
+
+            <h3>02 — The Low-Rank Hypothesis</h3>
+            <h2>Compression via Projection</h2>
+
+            <p>
+                DeepSeek’s core insight is based on the <strong>Manifold Hypothesis</strong>. In a high-dimensional space (e.g., the 8192-dimensional space of concatenated Key heads), the actual meaningful semantic information lies on a much lower-dimensional manifold.
+            </p>
+            <p>
+                Do we really need to store 128 distinct floats per head to encode that the subject is "cat"? Probably not. The relationship between tokens is <strong>Low-Rank</strong>.
+            </p>
+            
+            <p>
+                Standard Attention generates Keys ($K$) and Values ($V$) by projecting the hidden state ($h_t$) into a massive space:
+            </p>
+            <div class="math-block">
+                $$ K = h_t W_K, \quad V = h_t W_V $$
+            </div>
+            <p>
+                where $W_K, W_V \in \mathbb{R}^{d_{model} \times (n_{heads} d_{head})}$.
+            </p>
+
+            <p>
+                MLA replaces this with a <strong>Joint Compression Architecture</strong>. Instead of storing the huge $K$ and $V$ matrices, we store a compressed latent vector, $c_{KV}$.
+            </p>
+
+            <!-- VIZ 2: MANIFOLD PROJECTION -->
+            <div class="viz-container">
+                <div class="viz-header">
+                    <span class="viz-title">The Low-Rank Projection</span>
+                    <span class="mono">PARTICLE SYSTEM</span>
+                </div>
+                <canvas id="manifoldCanvas" width="700" height="400"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="setManifoldMode('high')">MHA (Full Rank Noise)</button>
+                    <button class="viz-btn" onclick="setManifoldMode('low')">MLA (Latent Manifold)</button>
+                </div>
+                <div class="caption">High-rank data (Red) contains redundancy. MLA (Blue) projects this onto a low-rank manifold, storing only the essential coordinates.</div>
+            </div>
+
+            <h3>The Mechanics of MLA</h3>
+            <p>
+                The process involves three steps: Down-projection, Storage, and Up-projection.
+            </p>
+            
+            <ol class="mono" style="list-style: decimal; padding-left: 2rem; margin-bottom: 2rem; color: var(--c-ink-soft);">
+                <li><strong>Down-Projection:</strong> Compress hidden state $h_t$ into latent vector $c_{KV}$ (e.g., 512 dims).</li>
+                <li><strong>Storage:</strong> Save <em>only</em> $c_{KV}$ in the KV Cache.</li>
+                <li><strong>Up-Projection:</strong> At inference, project $c_{KV}$ back up to generate the heads.</li>
+            </ol>
+
+            <div class="math-block">
+                $$ c_{KV} = h_t W_{DKV} $$
+                $$ K_{generated} = c_{KV} W_{UK} $$
+                $$ V_{generated} = c_{KV} W_{UV} $$
+            </div>
+
+            <p>
+                Wait. If we simply project it back up ($W_{UK}$) during inference, haven't we defeated the purpose? We still have to do the massive matrix math to regenerate the full keys, and we burn memory bandwidth reading the up-projection weights.
+            </p>
+            <p>
+                This leads us to the mathematical trick that defines MLA.
+            </p>
+
+            <h3>03 — The Matrix Absorption Trick</h3>
+            <h2>Associativity is All You Need</h2>
+
+            <p>
+                The standard Attention Score calculation is:
+            </p>
+            <div class="math-block">
+                $$ \text{Score} = Q K^T $$
+            </div>
+            
+            <p>
+                If we substitute our MLA definition of $K$:
+            </p>
+            <div class="math-block">
+                $$ \text{Score} = Q (c_{KV} W_{UK})^T $$
+                $$ \text{Score} = Q (W_{UK}^T c_{KV}^T) $$
+            </div>
+
+            <p>
+                Since matrix multiplication is associative, we can group the terms differently:
+            </p>
+            <div class="math-block">
+                $$ \text{Score} = (Q W_{UK}^T) c_{KV}^T $$
+            </div>
+
+            <p>
+                <strong>This is the breakthrough.</strong> We can absorb the Up-Projection matrix $W_{UK}$ into the Query $Q$. We compute an "Absorbed Query" ($Q_{absorbed} = Q W_{UK}^T$) <em>once</em>, and then perform the dot product directly against the tiny compressed latent vector $c_{KV}$.
+            </p>
+            <p>
+                We never materialize the full Key matrix in VRAM. We perform attention in the latent space.
+            </p>
+
+            <!-- VIZ 3: ABSORPTION FLOW -->
+            <div class="viz-container">
+                <div class="viz-header">
+                    <span class="viz-title">Matrix Absorption Pipeline</span>
+                    <span class="mono">PROCESS ANIMATION</span>
+                </div>
+                <canvas id="absorptionCanvas" width="700" height="300"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn" onclick="triggerAbsorption()">Simulate Absorption</button>
+                    <button class="viz-btn" onclick="resetAbsorption()">Reset</button>
+                </div>
+                <div class="caption">The Up-Projection Matrix ($W_{UK}$) merges into the Query, bypassing the need to decompress the Cache.</div>
+            </div>
+
+            <h3>04 — The Decoupled RoPE Strategy</h3>
+            <h2>The Geometry Problem</h2>
+
+            <p>
+                There is a catch. Modern LLMs use <strong>Rotary Positional Embeddings (RoPE)</strong>. RoPE encodes position by rotating the Key and Query vectors in geometric space.
+            </p>
+            <p>
+                <span class="mono">Rotation(K)</span> depends on the specific geometry of the head. If we compress the Key into a latent vector $c_{KV}$ via a learned projection $W_{DKV}$, we scramble that geometry. The rotation $R_{\theta}$ becomes meaningless in the latent space. You cannot rotate a "summary."
+            </p>
+            <p>
+                DeepSeek’s solution is <strong>Decoupled RoPE</strong>. They split the Key generation into two parallel pathways:
+            </p>
+            <ul style="list-style: none; padding-left: 0;">
+                <li style="margin-bottom: 1rem; border-left: 3px solid var(--c-ink); padding-left: 1rem;">
+                    <strong>1. The Content Path (Compressed):</strong> Carries the heavy semantic information. Compresses to 512 dimensions. Stored as $c_{KV}$.
+                </li>
+                <li style="margin-bottom: 1rem; border-left: 3px solid var(--c-accent); padding-left: 1rem;">
+                    <strong>2. The RoPE Path (Uncompressed):</strong> A "peeking" side-channel. It projects the hidden state into a tiny 64-dimensional vector ($k_{rope}$) solely for the purpose of carrying positional information.
+                </li>
+            </ul>
+
+            <p>
+                The final cache for a token is the concatenation: $[c_{KV}, k_{rope}]$.
+            </p>
+            <p>
+                The attention score is computed by adding the "Content Score" (calculated in latent space) and the "RoPE Score" (calculated in the rotary space).
+            </p>
+            <div class="math-block">
+                $$ q^T k = (q_{content}^T k_{content}) + (q_{rope}^T k_{rope}) $$
+            </div>
+
+            <!-- VIZ 4: COMPRESSOR -->
+            <div class="viz-container">
+                <div class="viz-header">
+                    <span class="viz-title">The Cache Compressor</span>
+                    <span class="mono">ANIMATION</span>
+                </div>
+                <canvas id="compressorCanvas" width="650" height="300"></canvas>
+                <div class="caption">Simulating memory blocks (Standard) entering the cache and being crushed into MLA Latent Vectors.</div>
+            </div>
+
+            <h3>05 — Conclusion</h3>
+            <h2>Economics as Architecture</h2>
+
+            <p>
+                DeepSeek-V3 is a masterclass in constraints-based engineering. By recognizing that memory bandwidth is the hard limit of inference, they traded a small amount of compute (the extra projections) for a massive gain in memory efficiency.
+            </p>
+            <p>
+                The 93% reduction in KV cache size is not just a "nice to have." It is the difference between a model that requires a cluster of 8 H100s to serve and one that can run on a single node. It transforms the unit economics of Intelligence.
+            </p>
+            <p>
+                We are entering an era where model architecture is dictated not just by loss curves, but by the physical limitations of silicon and memory buses. MLA is the first major victory in this new domain.
+            </p>
+
+            <p style="margin-top: 4rem; font-family: var(--f-mono);">
+                // Rachit Gupta
+            </p>
+
+        </article>
+
+        <footer>
+            <div class="footer-links">
+                <div style="margin-right: auto">
+                    <strong>Rachit Gupta</strong><br>
+                    <span class="mono">Systems Engineering Blog &copy; 2025</span>
+                </div>
+                <a href="#">Twitter</a>
+                <a href="#">Github</a>
+                <a href="#">RSS</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- POPOVER DIV -->
+    <div id="citation-popover" class="popover"></div>
+
+    <!-- VISUALIZATION LOGIC -->
+    <script>
+        // --- POPOVER LOGIC ---
+        const citations = {
+            "DeepSeek-V2/V3 Technical Reports": "DeepSeek-AI: 'DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model', arXiv 2024.",
+            "SemiAnalysis": "SemiAnalysis: 'DeepSeek's API Economics', 2025."
+        };
+        const popover = document.getElementById('citation-popover');
+        
+        document.querySelectorAll('.citation').forEach(cit => {
+            cit.addEventListener('mouseenter', (e) => {
+                const ref = e.target.getAttribute('data-cit');
+                popover.innerHTML = `<strong>Reference:</strong><br>${citations[ref] || ref}`;
+                popover.classList.add('visible');
+                const rect = e.target.getBoundingClientRect();
+                popover.style.left = (rect.left + window.scrollX - 140) + 'px';
+                popover.style.top = (rect.top + window.scrollY - 100) + 'px';
+            });
+            cit.addEventListener('mouseleave', () => { popover.classList.remove('visible'); });
+        });
+
+        // --- VIZ 1: Memory Scaling ---
+        const memCanvas = document.getElementById('memoryCanvas');
+        const memCtx = memCanvas.getContext('2d');
+        const slider = document.getElementById('contextSlider');
+        const contextDisplay = document.getElementById('contextVal');
+
+        function drawMemoryChart(contextLen) {
+            memCtx.clearRect(0, 0, 700, 350);
+            const layers = 80;
+            const precision = 2; // bytes
+            
+            // Calculations in GB
+            const mha_gb = (2 * layers * 64 * 128 * precision * contextLen) / 1e9;
+            const gqa_gb = (2 * layers * 8 * 128 * precision * contextLen) / 1e9;
+            const mla_gb = (layers * (512 + 64) * precision * contextLen) / 1e9;
+
+            const maxVal = 350; 
+            const scale = 250 / maxVal; 
+
+            function drawBar(x, val, color, label) {
+                const h = Math.min(val * scale, 280);
+                memCtx.fillStyle = color;
+                memCtx.fillRect(x, 300 - h, 100, h);
+                
+                memCtx.fillStyle = '#1A1C1B';
+                memCtx.font = '700 14px JetBrains Mono';
+                memCtx.fillText(val.toFixed(1) + " GB", x, 300 - h - 10);
+                
+                memCtx.fillStyle = '#4A4D4B';
+                memCtx.font = '14px JetBrains Mono';
+                memCtx.fillText(label, x, 325);
+            }
+
+            drawBar(100, mha_gb, '#D64000', 'MHA');
+            drawBar(300, gqa_gb, '#E0E0E0', 'GQA');
+            drawBar(500, mla_gb, '#4A4D4B', 'MLA'); // DeepSeek uses simple colors in paper
+
+            memCtx.strokeStyle = '#eee';
+            memCtx.beginPath();
+            memCtx.moveTo(50, 300); memCtx.lineTo(650, 300);
+            memCtx.stroke();
+        }
+
+        slider.oninput = function() {
+            contextDisplay.innerText = parseInt(this.value).toLocaleString();
+            drawMemoryChart(this.value);
+        }
+        drawMemoryChart(128000);
+
+        // --- VIZ 2: Manifold Projection ---
+        const manCanvas = document.getElementById('manifoldCanvas');
+        const manCtx = manCanvas.getContext('2d');
+        let particles = [];
+        let mode = 'high'; 
+
+        for(let i=0; i<150; i++) {
+            particles.push({
+                x: Math.random() * 200 - 100,
+                y: Math.random() * 200 - 100,
+                z: Math.random() * 200 - 100,
+                currentX: 0, currentY: 0, currentZ: 0
+            });
+        }
+
+        function setManifoldMode(m) {
+            mode = m;
+            document.querySelectorAll('#manifoldCanvas + .viz-controls .viz-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function drawManifold() {
+            manCtx.clearRect(0,0,700,400);
+            manCtx.save();
+            manCtx.translate(350, 200);
+            
+            const time = Date.now() * 0.001;
+            const angle = time * 0.2; // Slow rotation
+            const ca = Math.cos(angle); const sa = Math.sin(angle);
+
+            particles.forEach(p => {
+                let tx = p.x; let ty = p.y; let tz = p.z;
+                if (mode === 'low') { tz = p.x * 0.3 + p.y * 0.2; } // Collapse to plane
+
+                p.currentX += (tx - p.currentX)*0.1;
+                p.currentY += (ty - p.currentY)*0.1;
+                p.currentZ += (tz - p.currentZ)*0.1;
+
+                // 3D Projection
+                let rx = p.currentX * ca - p.currentZ * sa;
+                let rz = p.currentX * sa + p.currentZ * ca;
+                let ry = p.currentY;
+                let f = 300 / (300 + rz); 
+                let sx = rx * f; let sy = ry * f;
+
+                manCtx.beginPath();
+                manCtx.fillStyle = mode === 'low' ? '#1A1C1B' : '#D64000';
+                manCtx.globalAlpha = 0.8;
+                manCtx.arc(sx, sy, 3 * f, 0, Math.PI*2);
+                manCtx.fill();
+            });
+            manCtx.restore();
+            requestAnimationFrame(drawManifold);
+        }
+        drawManifold();
+
+
+        // --- VIZ 3: Absorption Flow ---
+        const absCanvas = document.getElementById('absorptionCanvas');
+        const absCtx = absCanvas.getContext('2d');
+        let absState = 'start'; // start, moving, done
+        let moveProgress = 0;
+
+        function triggerAbsorption() {
+            if(absState === 'start') { absState = 'moving'; moveProgress = 0; }
+        }
+        function resetAbsorption() { absState = 'start'; moveProgress = 0; }
+
+        function drawRect(x, y, w, h, color, text) {
+            absCtx.fillStyle = '#fff'; absCtx.strokeStyle = color; absCtx.lineWidth = 2;
+            absCtx.fillRect(x, y, w, h); absCtx.strokeRect(x, y, w, h);
+            absCtx.fillStyle = '#1A1C1B'; absCtx.font = '700 16px JetBrains Mono';
+            absCtx.textAlign = 'center'; absCtx.fillText(text, x + w/2, y + h/2 + 5);
+        }
+
+        function animateAbsorption() {
+            absCtx.clearRect(0,0,700,300);
+            
+            // Query
+            drawRect(100, 100, 80, 80, '#D64000', 'Q');
+
+            let ukX = 250; let alpha = 1;
+            if(absState === 'moving') {
+                moveProgress += 0.02;
+                if(moveProgress >= 1) { moveProgress = 1; absState = 'done'; }
+                let t = moveProgress < .5 ? 2*moveProgress*moveProgress : -1+(4-2*moveProgress)*moveProgress;
+                ukX = 250 - (150 * t);
+                if(moveProgress > 0.8) alpha = 1 - (moveProgress - 0.8)*5;
+            } else if (absState === 'done') { ukX = 100; alpha = 0; }
+
+            if(alpha > 0) {
+                absCtx.globalAlpha = alpha;
+                drawRect(ukX, 100, 80, 80, '#F2C94C', 'W_UK');
+                absCtx.globalAlpha = 1;
+            }
+
+            drawRect(450, 120, 40, 40, '#0047AB', 'c_KV');
+
+            // Text
+            absCtx.fillStyle = '#1A1C1B'; absCtx.font = '20px JetBrains Mono';
+            if(absState === 'start') {
+                absCtx.fillText("×", 215, 145); absCtx.fillText("×", 400, 145);
+            } else if (absState === 'done') {
+                absCtx.fillStyle = '#D64000'; absCtx.fillText("Absorbed!", 140, 80);
+                absCtx.fillStyle = '#1A1C1B'; absCtx.fillText("×", 300, 145);
+            }
+            requestAnimationFrame(animateAbsorption);
+        }
+        animateAbsorption();
+        
+        // --- VIZ 4: Compressor ---
+        const compCanvas = document.getElementById('compressorCanvas');
+        const compCtx = compCanvas.getContext('2d');
+        let compBlocks = [];
+        let compFrame = 0;
+
+        function initCompressor() {
+            compBlocks = [];
+            for(let i=0; i<6; i++) {
+                compBlocks.push({ x: 20, y: 40 + i*40, w: 100, h: 30, color: '#D64000', state: 'mha', delay: i*40 });
+            }
+        }
+        function drawCompressor() {
+            compCtx.clearRect(0,0,650,300);
+            
+            // Zones
+            compCtx.strokeStyle = '#ddd'; compCtx.lineWidth=2;
+            compCtx.strokeRect(10, 10, 140, 280);
+            compCtx.strokeRect(450, 10, 140, 280);
+            compCtx.fillStyle='#aaa'; compCtx.font='12px JetBrains Mono';
+            compCtx.fillText("Standard MHA", 30, 30); compCtx.fillText("MLA Cache", 470, 30);
+            
+            // Compressor
+            compCtx.beginPath(); compCtx.moveTo(200, 20); compCtx.lineTo(400, 100);
+            compCtx.moveTo(200, 280); compCtx.lineTo(400, 200);
+            compCtx.stroke(); compCtx.fillText("Low Rank Proj", 260, 150);
+
+            compBlocks.forEach(b => {
+                if(compFrame < b.delay) return;
+                
+                if(b.x < 250) { b.x += 3; } // Move to compressor
+                else if (b.x < 460) { // Compress
+                    b.x += 3;
+                    if(b.h > 5) b.h -= 0.4; // Shrink
+                    let targetY = 130 + (compBlocks.indexOf(b)*7);
+                    b.y += (targetY - b.y)*0.05;
+                    b.color = '#1A1C1B';
+                }
+                
+                compCtx.fillStyle = b.color;
+                compCtx.fillRect(b.x, b.y, b.w, b.h);
+            });
+            
+            compFrame++;
+            if(compFrame > 500) { compFrame = 0; initCompressor(); }
+            requestAnimationFrame(drawCompressor);
+        }
+        initCompressor();
+        drawCompressor();
+
+    </script>
+</body>
+</html>

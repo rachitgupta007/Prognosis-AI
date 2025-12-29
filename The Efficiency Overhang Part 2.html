@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Efficiency Overhang: Part IV — Conclusion</title>
+    
+    <!-- Fonts: Newsreader (Serif) & JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Visualization Libraries: Plotly & D3 -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 19px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: fadeInUp 0.8s var(--easing-sharp) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* UTILITY */
+        .mono {
+            font-family: var(--f-mono);
+            letter-spacing: -0.03em;
+            font-size: 0.85rem;
+        }
+
+        .caps {
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+
+        a:hover {
+            border-color: var(--c-accent);
+        }
+
+        /* NAVIGATION */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid rgba(26, 28, 27, 0.05);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            font-family: var(--f-mono);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.6;
+            border: none;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            opacity: 1;
+            color: var(--c-accent);
+        }
+
+        /* TYPOGRAPHY */
+        h1, h2, h3 {
+            color: var(--c-ink);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 3.5rem;
+            line-height: 1.1;
+        }
+
+        h2 {
+            margin-top: 3rem;
+            font-size: 2rem;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-family: var(--f-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--c-ink-soft);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            max-width: 75ch;
+        }
+
+        blockquote {
+            border-left: 3px solid var(--c-accent);
+            padding-left: 1.5rem;
+            margin: 2.5rem 0;
+            font-style: italic;
+            color: var(--c-ink-soft);
+            font-size: 1.2rem;
+            background: rgba(214, 64, 0, 0.03);
+            padding: 1.5rem;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        strong { font-weight: 600; color: var(--c-ink); }
+        em { color: var(--c-ink-soft); }
+
+        /* VISUALIZATION CONTAINERS */
+        .viz-wrapper {
+            margin: 4rem -2rem; /* Breakout */
+            padding: 1.5rem;
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+            border-radius: 2px;
+        }
+
+        .viz-caption {
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            color: var(--c-ink-soft);
+            margin-top: 1rem;
+            text-align: center;
+            border-top: 1px dotted var(--c-grid);
+            padding-top: 0.5rem;
+        }
+
+        .viz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .viz-btn {
+            background: transparent;
+            border: 1px solid var(--c-grid);
+            padding: 0.5rem 1rem;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--c-ink-soft);
+            transition: all 0.2s;
+        }
+
+        .viz-btn:hover {
+            border-color: var(--c-ink);
+            color: var(--c-ink);
+            background: #fafafa;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 6rem 3rem;
+            border-top: 1px solid var(--c-grid);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            margin-top: 6rem;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: flex-end;
+        }
+
+        /* LAYOUT */
+        .content-container {
+            max-width: 800px;
+            margin: 8rem auto;
+            padding: 0 2rem;
+        }
+        
+        .meta {
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">Rachit Gupta</div>
+        <div class="nav-links">
+            <a href="#">Essays</a>
+            <a href="#">Research</a>
+            <a href="#" class="active">The Efficiency Overhang</a>
+        </div>
+    </nav>
+
+    <div class="content-container">
+        
+        <header class="animate-enter">
+            <h1>The Efficiency Overhang:<br><span style="font-size: 0.6em; font-weight: 400; font-style: italic; color: var(--c-ink-soft);">Part IV — The Conclusion</span></h1>
+            
+            <div class="meta delay-1">
+                <span>Nov 30, 2025</span>
+                <span>By Rachit Gupta</span>
+                <span>~25 min read</span>
+            </div>
+        </header>
+
+        <section class="animate-enter delay-2">
+            <p>
+                If you have been reading the previous chapters of this essay series, you might be feeling a distinctive kind of vertigo. It is that specific, dizzying sensation that comes when you realize the ground beneath you isn't stable—it is moving. And it is moving faster than you thought possible.
+            </p>
+            <p>
+                We started this journey roughly 15,000 words ago with a simple observation: for the last few years, we have been driving a Ferrari in first gear. We were naively scaling up dense models, burning compute like it was infinite, and ignoring the massive inefficiencies in our software stack. We were building massive, gas-guzzling muscle cars. They were impressive, sure. They roared. But they were heavy.
+            </p>
+            <p>
+                Now, we are seeing the shift. We are seeing the industry transition from pure <strong>Scale</strong> to <strong>Scale + Efficiency</strong>. The core thesis I want to land on in this final section—the takeaway that I want you to burn into your weights—is this:
+            </p>
+            <blockquote>
+                Scale is the engine. Efficiency is the fuel. Together, they are a rocket.
+            </blockquote>
+            <p>
+                If you have a massive engine but no fuel, you are a static monument to engineering. If you have high-octane fuel but a tiny engine, you are a lawnmower. But when you combine massive GPU clusters (Scale) with algorithmic compression and sparse activation (Efficiency), you escape gravity.
+            </p>
+            <p>
+                In this conclusion, I want to synthesize everything we have discussed—from DeepSeek’s architectural jujitsu to the raw economics of compute—and look at the pareto frontier of what comes next. Because when you look at the numbers, specifically the interplay between hardware acceleration and algorithmic compression, it becomes clear that we aren't hitting a wall. We are just finishing the ignition sequence.
+            </p>
+        </section>
+
+        <!-- SECTION 1 -->
+        <section class="animate-enter delay-3">
+            <h2>1. The Stack: A First-Principles Recap</h2>
+            <p>
+                Before we look forward and speculate about AGI, let’s do a "forward pass" through the concepts we’ve covered. It is easy to get lost in the acronym soup—MoE, MLA, RLHF, FP8—so let's ground them in the actual mechanics of what is happening on the silicon.
+            </p>
+            <p>
+                We are witnessing the emergence of a <strong>System Architecture</strong> that is fundamentally different from the "dense transformer" paradigm of GPT-3.
+            </p>
+
+            <h3>The Sparse Future: MoE (Mixture of Experts)</h3>
+            <p>
+                Recall the dense model. In a standard dense Transformer, every time you ask it <em>"What is the capital of France?"</em>, every single parameter in the network fires. The matrix multiplication occurs over the entire weight matrix $W$. It is like using your entire brain—visual cortex, motor control, emotional centers—just to remember the word "Paris." It is computationally wasteful.
+            </p>
+            <p>
+                <strong>Mixture of Experts (MoE)</strong> changes the topology. Instead of one giant dense block, we have a "mixture" of smaller expert networks $\{E_1, E_2, ..., E_n\}$. A router (a tiny learnable gate $G(x)$) decides which expert needs to process the token.
+            </p>
+            <p>
+                $$ y = \sum_{i \in TopK} G(x)_i E_i(x) $$
+            </p>
+            <p>
+                The magic number here is the difference between <em>active</em> parameters and <em>total</em> parameters. You might have a model with 671 billion parameters (like DeepSeek-V3), but for any given token, you only activate 37 billion. That is a roughly <strong>18x</strong> reduction in FLOPs per token. You are getting the "intelligence" of the massive model for the inference cost of the small one. This isn't just a trick. It's a fundamental shift in how we map neural networks to hardware. We are moving from "dense compute" to "conditional compute."
+            </p>
+
+            <h3>The Memory Bottleneck: MLA (Multi-Head Latent Attention)</h3>
+            <p>
+                This is where the recent open-weights releases really flexed their engineering muscle. In traditional Transformers, the Key-Value (KV) cache is the silent killer. As your context window grows (128k, 1M, 10M tokens), you have to store the Key and Value matrices for <em>every past token</em> in GPU VRAM to attend to them.
+            </p>
+            <p>
+                $$ \text{Memory} \approx 2 \times B \times L \times N_h \times D_h $$
+            </p>
+            <p>
+                This memory bandwidth bottleneck is often <em>more</em> constraining than raw compute. You sit there waiting for HBM (High Bandwidth Memory) to fetch data while your Tensor Cores sit idle.
+            </p>
+            <p>
+                <strong>MLA (Multi-Head Latent Attention)</strong> is a clever low-rank compression trick. Instead of storing the full, high-dimensional keys and values, we project them down into a much smaller "latent" vector $c_{KV}$ via a down-projection matrix $W_{DKV}$.
+            </p>
+            <p>
+                 $$ c_{KV} = W_{DKV} \cdot h_{input} $$
+            </p>
+            <p>
+                We store only this compressed latent vector in the cache. When we need to compute attention scores, we can either up-project it on the fly or compute attention in the latent space. It turns out you can compress the KV cache by a factor of <strong>5x to 10x</strong> with negligible loss in performance. This isn't just an optimization; it's an enabler. It allows us to run massive contexts on consumer-grade hardware.
+            </p>
+
+            <!-- VIZ 1: ARCHITECTURE (D3.js) -->
+            <div class="viz-wrapper">
+                <span class="viz-title">Figure 1: The Modern Stack (MoE + MLA Flow)</span>
+                <div id="arch-viz" style="width: 100%; height: 400px; position: relative;"></div>
+                <div class="viz-caption">
+                    <strong>Interactive Graph:</strong> Data flows from the Input, gets compressed by MLA (Orange), and is then routed by the Gating Network (Grey) to specific Experts.
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section class="animate-enter delay-3">
+            <h2>2. The Compound Exponential</h2>
+            <p>
+                Now, let’s talk about the numbers. This is where the "Overhang" concept becomes concrete.
+                There is a prevailing narrative—you see it on Twitter/X all the time—that AI progress is stalling because we are running out of data or because scaling laws are bending. I find this view optimistically pessimistic. It assumes that the only variable that matters is the number of GPUs you can chain together.
+            </p>
+            <p>
+                But look at the equation of capability $C(t)$:
+                $$ C(t) \approx \text{Hardware}(t) \times \text{Algorithms}(t) $$
+            </p>
+            <p>
+                We are used to Moore's Law (or Jensen's Law) giving us better hardware. Let's say, conservatively, hardware cost-performance improves <strong>3x</strong> every 2 years (moving from A100s to H100s to Blackwell).
+            </p>
+            <p>
+                If algorithms stayed static, we’d get a 3x improvement. But algorithms are <em>not</em> static. In fact, right now, they are moving faster than hardware.
+            </p>
+            <ul>
+                <li>Moving from Dense to MoE? <strong>~10x</strong> efficiency gain.</li>
+                <li>Moving from standard Attention to FlashAttention + MLA? <strong>~5x</strong> memory gain.</li>
+                <li>Moving from FP16 to FP8 or FP4 quantization? <strong>~2-4x</strong> throughput gain.</li>
+            </ul>
+            <p>
+                When you compound these, you don't get addition; you get multiplication.
+            </p>
+            <p>
+                <strong>The "Compound Effect":</strong> If hardware improves <strong>3x</strong> and algorithmic efficiency improves <strong>10x</strong>, we don’t get 13x. We get <strong>30x</strong>. We are essentially discovering that intelligence is much more compressible than we thought. We were running uncompressed `.bmp` files of intelligence, and we just discovered `.jpeg`.
+            </p>
+
+            <!-- VIZ 2: PARETO FRONTIER (Plotly) -->
+            <div class="viz-wrapper">
+                <span class="viz-title">Figure 2: The Pareto Frontier</span>
+                <div id="pareto-viz" style="width: 100%; height: 500px;"></div>
+                <div class="viz-caption">
+                    The "Efficiency Overhang" is the shaded area between the Old Frontier (Red) and the New Frontier (Teal). We are achieving higher capabilities for orders of magnitude lower cost.
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3 -->
+        <section>
+            <h2>3. The DeepSeek Moment and the 40x Price Drop</h2>
+            <p>
+                We cannot write this conclusion without addressing the catalyst that forced us to rewrite the economics of this industry: <strong>DeepSeek</strong>.
+            </p>
+            <p>
+                The release of DeepSeek-V3 and R1 sent a shockwave through the industry. Not just because the models were good—they are very good—but because of the <em>economics</em>. They claimed to train a GPT-4 class model for roughly <strong>$5.6 million</strong> in compute. Compare that to the rumored $100M+ price tags of their competitors.
+            </p>
+            <p>
+                Then came the API pricing. At roughly <strong>$0.14 per million input tokens</strong> (at launch), it was nearly <strong>40x cheaper</strong> than the incumbent state-of-the-art.
+            </p>
+            <p>
+                This validates Sam Altman’s famous prediction: <em>"Compute is the currency of the future."</em>
+            </p>
+            <p>
+                If compute is currency, DeepSeek just demonstrated that we’ve been overpaying for our minting process. By rigorously applying MLA, MoE, and aggressive FP8 quantization, they showed that the "marginal cost of intelligence" is plummeting faster than Moore’s Law predicts. This isn't just about "China vs. US" or "Open Source vs. Closed." It is a technical proof-of-concept for the <strong>Efficiency Overhang</strong>. It proves that there was massive inefficiency in how we were training these things, and that optimization is a gold mine that hasn't been tapped out yet.
+            </p>
+        </section>
+
+        <!-- SECTION 4 -->
+        <section>
+            <h2>4. The Wildcard: When Marginal Cost Hits Zero</h2>
+            <p>
+                So, what happens next? Let's engage in a bit of "System 2" thinking about the future.
+                We are racing toward a world where the cost of generating intelligent tokens approaches zero. Not literally zero (thermodynamics still applies), but effectively zero for human-scale tasks.
+            </p>
+            <p>
+                <strong>The Jevons Paradox</strong> suggests that as technology increases the efficiency with which a resource is used, the total consumption of that resource increases rather than decreases.
+            </p>
+            <p>
+                When light became cheap (LEDs), we didn't use less electricity for lighting; we just lit up everything, everywhere, all the time. When intelligence becomes cheap, we won't just use it to write essays or code snippets. We will stick intelligence into everything.
+            </p>
+            <ul>
+                <li>Your toaster will have a VLM (Vision Language Model) to see if the bread is burning.</li>
+                <li>Your operating system will verify every line of code it runs in real-time.</li>
+                <li>NPCs in video games will have infinite context windows and distinct personalities.</li>
+            </ul>
+            <p>
+                But the biggest shift will be <strong>Agentic Loops</strong>. Currently, we treat LLMs as oracles. We ask a question, we get an answer. In a world of zero marginal cost, we will treat LLMs as <strong>workers</strong>. We will spin up a swarm of 1,000 agents to explore a codebase, attempt 500 refactors, write unit tests for all of them, run the tests, and present us with the single best option.
+            </p>
+
+            <!-- VIZ 3: ROCKET ANIMATION (Canvas) -->
+            <div class="viz-wrapper" style="background: #111; border: none; color: white;">
+                <span class="viz-title" style="color: #666; border-bottom: 1px solid #333;">Figure 3: The Rocket Equation</span>
+                <canvas id="rocket-viz" height="350"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn" style="color: #fff; border-color: #555;" onclick="launchRocket()">IGNITE THRUSTERS</button>
+                    <button class="viz-btn" style="color: #fff; border-color: #555;" onclick="resetRocket()">RESET</button>
+                </div>
+                <div class="viz-caption" style="color: #888; border-color: #333;">
+                    Visualization of the system shedding "dead weight" (Dense Params, KV Bloat) while increasing thrust (Scale).
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5 -->
+        <section>
+            <h2>5. The Final Architecture: System 2</h2>
+            <p>
+                To wrap this up, let's look at the final architecture. It’s not just a Transformer anymore. It’s a biological-looking organism of specialized components.
+            </p>
+            <p>
+                It involves a <strong>Fast System 1</strong> (The MoE) that handles 90% of tokens cheaply, and a <strong>Slow System 2</strong> (The Reasoner) that spins up for the hard stuff.
+            </p>
+            <p>
+                Models like OpenAI's o1 and DeepSeek's R1 utilize <strong>Reinforcement Learning from Human Feedback (RLHF)</strong> on Chain-of-Thought data. They essentially learn to "talk to themselves" in a hidden context before outputting an answer. This "Thinking Process" allows the model to verify logic, backtrack on errors, and refine its output. We are effectively trading <strong>Time</strong> for <strong>Intelligence</strong>.
+            </p>
+        </section>
+
+        <!-- SECTION 6 -->
+        <section>
+            <h2>6. Optimism and Caution</h2>
+            <p>
+                I want to end on a note of balanced realism. In tech, it is easy to get swept up in the exponential curves and forget that these lines on a graph represent real-world impacts.
+            </p>
+            <p>
+                <strong>The Optimism:</strong> Intelligence is becoming abundant. Abundance is generally good. It means better healthcare diagnostics, personalized education for every child, and the ability to solve scientific problems (protein folding, fusion containment) that were previously computationally intractable. The democratization of this tech—via open weights and efficiency—means it won't just be locked in the ivory towers of a few mega-corporations. It will be on your laptop. It will be on your phone.
+            </p>
+            <p>
+                <strong>The Caution:</strong> Speed kills. Or at least, speed without steering is dangerous. As we make these systems more efficient, we are also making them more autonomous. We are creating loops where AI generates data to train the next AI. The "Efficiency Overhang" implies we have a lot of runway left. We aren't slowing down. That means we have less time than we thought to figure out alignment, safety, and societal integration.
+            </p>
+
+            <!-- VIZ 4: GLOBAL MAP (Plotly) -->
+            <div class="viz-wrapper">
+                <span class="viz-title">Figure 4: The Decentralization of Intelligence</span>
+                <div id="globe-viz" style="width: 100%; height: 500px;"></div>
+                <div class="viz-caption">
+                    Two years ago, intelligence was concentrated in a few data centers. Today, thanks to efficiency, it is shattering into millions of tiny stars on the Edge.
+                </div>
+            </div>
+
+            <p>
+                We are not hitting a wall. We are just shedding the weight. The rocket is lighter. The thrusters are firing. And for the first time, thanks to the efficiency overhang, there is room on board for everyone.
+            </p>
+            <p>
+                The engine is Scale. The fuel is Efficiency. Let's see where this rocket goes.
+            </p>
+
+            <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--c-grid); font-family: var(--f-mono);">
+                Happy training,<br>
+                <strong>Rachit Gupta</strong>
+            </div>
+        </section>
+        
+    </div>
+
+    <footer>
+        <div class="footer-col">
+            <strong>Rachit Gupta</strong>
+            <span class="mono">Writer & Researcher</span>
+        </div>
+        <div class="footer-col footer-links">
+            <a href="#">Twitter</a>
+            <a href="#">GitHub</a>
+            <a href="#">RSS</a>
+        </div>
+    </footer>
+
+    <!-- VISUALIZATION LOGIC -->
+    <script>
+        // --- VIZ 1: ARCHITECTURE (D3.js) ---
+        (function() {
+            const container = document.getElementById('arch-viz');
+            const width = container.clientWidth;
+            const height = 400;
+
+            const svg = d3.select("#arch-viz")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            // Definitions for Arrows
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 20)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#999");
+
+            // Nodes
+            const nodes = [
+                {id: "Input", type: "start", x: width/2, y: 50},
+                {id: "MLA", type: "process", x: width/2, y: 150},
+                {id: "Router", type: "router", x: width/2, y: 250},
+                {id: "Expert 1", type: "expert", x: width/2 - 120, y: 350},
+                {id: "Expert 2", type: "expert", x: width/2, y: 350},
+                {id: "Expert 3", type: "expert", x: width/2 + 120, y: 350}
+            ];
+
+            // Links
+            const links = [
+                {source: "Input", target: "MLA"},
+                {source: "MLA", target: "Router"},
+                {source: "Router", target: "Expert 1", active: true},
+                {source: "Router", target: "Expert 2", active: false},
+                {source: "Router", target: "Expert 3", active: true}
+            ];
+
+            // Draw Lines
+            const link = svg.append("g")
+                .selectAll("line")
+                .data(links)
+                .enter().append("line")
+                .attr("stroke", d => d.active ? "#D64000" : "#ddd")
+                .attr("stroke-width", d => d.active ? 2 : 1)
+                .attr("stroke-dasharray", d => d.active ? "0" : "5,5")
+                .attr("marker-end", "url(#arrow)")
+                .attr("x1", d => nodes.find(n => n.id === d.source).x)
+                .attr("y1", d => nodes.find(n => n.id === d.source).y)
+                .attr("x2", d => nodes.find(n => n.id === d.target).x)
+                .attr("y2", d => nodes.find(n => n.id === d.target).y);
+
+            // Draw Nodes
+            const node = svg.append("g")
+                .selectAll("g")
+                .data(nodes)
+                .enter().append("g")
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            node.append("circle")
+                .attr("r", 20)
+                .attr("fill", d => {
+                    if(d.type === 'process') return '#F4A261'; // MLA
+                    if(d.type === 'router') return '#4A4D4B'; // Router
+                    if(d.type === 'expert') return '#D1CEC4'; // Experts
+                    return '#1A1C1B';
+                })
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2);
+
+            node.append("text")
+                .text(d => d.id)
+                .attr("dy", 35)
+                .attr("text-anchor", "middle")
+                .style("font-family", "JetBrains Mono")
+                .style("font-size", "10px")
+                .style("fill", "#666");
+
+            // Animation Loop
+            function animateFlow() {
+                link.filter(d => d.active)
+                    .transition().duration(1000).attr("stroke-width", 4).attr("stroke", "#E76F51")
+                    .transition().duration(1000).attr("stroke-width", 2).attr("stroke", "#D64000")
+                    .on("end", animateFlow);
+            }
+            animateFlow();
+        })();
+
+        // --- VIZ 2: PARETO FRONTIER (Plotly) ---
+        (function() {
+            const steps = 100;
+            const x_dense = [], y_dense = [];
+            const x_eff = [], y_eff = [];
+
+            for(let i=0; i<steps; i++) {
+                let t = i / (steps-1);
+                
+                // Dense Era (Expensive)
+                let cost_d = Math.pow(10, 0 + t*2.5); // $1 to $300
+                x_dense.push(cost_d);
+                y_dense.push(15 * Math.log10(cost_d) + 40);
+
+                // Efficiency Era (Cheap)
+                let cost_e = Math.pow(10, -1.5 + t*3.0); // $0.03 to $30
+                x_eff.push(cost_e);
+                y_eff.push(15 * Math.log10(cost_e * 40) + 45); 
+            }
+
+            const traceDense = {
+                x: x_dense, y: y_dense, mode: 'lines', name: 'Dense Era (GPT-4)',
+                line: {color: '#EF5350', width: 2, dash: 'dot'}
+            };
+
+            const traceEff = {
+                x: x_eff, y: y_eff, mode: 'lines', name: 'Efficiency Era (DeepSeek)',
+                line: {color: '#2A9D8F', width: 4},
+                fill: 'tonexty', fillcolor: 'rgba(42, 157, 143, 0.1)'
+            };
+
+            const point = {
+                x: [0.14], y: [90], mode: 'markers+text',
+                text: ['DeepSeek V3<br>($0.14)'], textposition: 'bottom right',
+                marker: {color: '#E9C46A', size: 12, symbol: 'star'},
+                showlegend: false
+            };
+
+            const layout = {
+                paper_bgcolor: '#fff', plot_bgcolor: '#fff',
+                font: { family: 'JetBrains Mono', color: '#4A4D4B' },
+                xaxis: { type: 'log', title: 'Cost ($ / 1M Tokens)', gridcolor: '#eee' },
+                yaxis: { title: 'Capability Score', gridcolor: '#eee' },
+                margin: {t:20, b:40, l:50, r:20},
+                showlegend: true, legend: {x: 0.05, y: 0.95}
+            };
+
+            Plotly.newPlot('pareto-viz', [traceDense, traceEff, point], layout, {displayModeBar: false});
+        })();
+
+        // --- VIZ 3: ROCKET CANVAS ---
+        let rocketAnim;
+        let rocketY = 250;
+        let particles = [];
+        let debris = [];
+        let isLaunching = false;
+
+        const canvas = document.getElementById('rocket-viz');
+        const ctx = canvas.getContext('2d');
+        
+        // Handle Retina Display
+        function resizeRocket() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+        }
+        resizeRocket();
+
+        function drawRocket(y) {
+            const cx = canvas.width/4; // Adjusted for scaled context
+            
+            // Rocket Body
+            ctx.fillStyle = '#E0E0E0';
+            ctx.beginPath();
+            ctx.ellipse(cx, y, 20, 60, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // Fins
+            ctx.fillStyle = '#D64000';
+            ctx.beginPath();
+            ctx.moveTo(cx-20, y+30); ctx.lineTo(cx-30, y+60); ctx.lineTo(cx-10, y+50);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx+20, y+30); ctx.lineTo(cx+30, y+60); ctx.lineTo(cx+10, y+50);
+            ctx.fill();
+
+            // Text
+            ctx.fillStyle = '#1A1C1B';
+            ctx.font = 'bold 10px JetBrains Mono';
+            ctx.textAlign = 'center';
+            ctx.fillText("SCALE", cx, y+5);
+        }
+
+        function animateRocketFrame() {
+            const w = canvas.width/2;
+            const h = canvas.height/2;
+            const cx = w/2;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Stars
+            ctx.fillStyle = '#fff';
+            if(Math.random() > 0.8) ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+
+            if(isLaunching) {
+                if(rocketY > 80) rocketY -= 1.5;
+                // Add thrust particles
+                for(let i=0; i<5; i++) {
+                    particles.push({x: cx + (Math.random()-0.5)*15, y: rocketY+60, life: 1.0});
+                }
+            }
+
+            // Draw particles
+            for(let i=particles.length-1; i>=0; i--) {
+                let p = particles[i];
+                p.y += 3;
+                p.life -= 0.05;
+                ctx.fillStyle = `rgba(255, 100, 0, ${p.life})`;
+                ctx.fillRect(p.x, p.y, 2, 2);
+                if(p.life <= 0) particles.splice(i, 1);
+            }
+
+            // Draw debris
+            debris.forEach(d => {
+                d.y += 1; d.rot += 0.05; d.x += d.vx;
+                ctx.save();
+                ctx.translate(d.x, d.y);
+                ctx.rotate(d.rot);
+                ctx.fillStyle = '#555';
+                ctx.fillRect(-15, -10, 30, 20);
+                ctx.fillStyle = '#fff';
+                ctx.font = '8px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(d.label, 0, 3);
+                ctx.restore();
+            });
+
+            drawRocket(rocketY);
+            rocketAnim = requestAnimationFrame(animateRocketFrame);
+        }
+
+        function launchRocket() {
+            if(isLaunching) return;
+            isLaunching = true;
+            debris.push({x: canvas.width/4 - 40, y: rocketY, vx: -0.5, label: 'Dense', rot: 0});
+            debris.push({x: canvas.width/4 + 40, y: rocketY+20, vx: 0.5, label: 'KV Bloat', rot: 0});
+        }
+
+        function resetRocket() {
+            rocketY = 250;
+            isLaunching = false;
+            particles = [];
+            debris = [];
+        }
+
+        animateRocketFrame();
+
+        // --- VIZ 4: GLOBE (Plotly) ---
+        (function() {
+            const lats = [], lons = [];
+            for(let i=0; i<300; i++) {
+                lats.push(Math.random()*140 - 70);
+                lons.push(Math.random()*360 - 180);
+            }
+            const trace = {
+                type: 'scattergeo', mode: 'markers', lat: lats, lon: lons,
+                marker: { size: 3, color: '#D64000', opacity: 0.8 }
+            };
+            const layout = {
+                paper_bgcolor: '#111', margin: {t:0,b:0,l:0,r:0},
+                geo: {
+                    projection: {type: 'orthographic', rotation: {lon: 100, lat: 30}},
+                    bgcolor: '#111', showland: true, landcolor: '#222',
+                    showocean: true, oceancolor: '#111'
+                }
+            };
+            Plotly.newPlot('globe-viz', [trace], layout, {displayModeBar: false});
+            
+            let angle = 0;
+            function rotate() {
+                angle += 0.5;
+                Plotly.animate('globe-viz', {layout: {geo: {projection: {rotation: {lon: angle}}}}}, {transition: {duration: 0}, frame: {duration: 20, redraw: false}});
+                requestAnimationFrame(rotate);
+            }
+            rotate();
+        })();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            resizeRocket();
+            Plotly.Plots.resize('pareto-viz');
+            Plotly.Plots.resize('globe-viz');
+        });
+
+    </script>
+</body>
+</html>

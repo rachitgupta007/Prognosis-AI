@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Context Explosion: KV Cache & Ring Attention | Rachit Gupta</title>
+    
+    <!-- Fonts: Newsreader (Serif) & JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* --- DESIGN SYSTEM: PAPER & INK --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+            --c-viz-bg: #EAE8DC;
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 19px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: fadeInUp 0.8s var(--easing-sharp) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* UTILITY */
+        .mono { font-family: var(--f-mono); letter-spacing: -0.03em; font-size: 0.85rem; }
+        .caps { text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+        a:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+        /* LAYOUT */
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 8rem 1.5rem 4rem;
+        }
+
+        /* NAVIGATION */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid rgba(26, 28, 27, 0.05);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; font-family: var(--f-mono); }
+        .nav-links { display: flex; gap: 2.5rem; }
+        .nav-links a { font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; border: none; }
+        .nav-links a:hover, .nav-links a.active { opacity: 1; color: var(--c-accent); }
+
+        /* TYPOGRAPHY */
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+            color: var(--c-ink);
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-top: 3.5rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            border-top: 1px solid var(--c-grid);
+            padding-top: 1rem;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+            color: var(--c-ink-soft);
+        }
+
+        p { margin-bottom: 1.5rem; text-align: justify; }
+
+        blockquote {
+            border-left: 3px solid var(--c-accent);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: var(--c-ink-soft);
+            background: rgba(0,0,0,0.03);
+            padding: 1.5rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* CODE BLOCKS */
+        pre {
+            background: var(--c-ink);
+            color: var(--c-paper);
+            padding: 1.5rem;
+            border-radius: 4px;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            overflow-x: auto;
+            margin: 2rem 0;
+            line-height: 1.5;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        code {
+            font-family: var(--f-mono);
+            background: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        pre code { background: none; padding: 0; color: #f2f0e6; }
+        
+        .math-block {
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        /* CITATIONS */
+        .citation {
+            vertical-align: super;
+            font-size: 0.7em;
+            color: var(--c-accent);
+            cursor: pointer;
+            margin-left: 2px;
+            font-family: var(--f-mono);
+            border: none;
+            font-weight: bold;
+        }
+        
+        .popover {
+            position: absolute;
+            background: var(--c-ink);
+            color: var(--c-paper);
+            padding: 1rem;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 0.85rem;
+            font-family: var(--f-mono);
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            line-height: 1.4;
+            text-align: left;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 30px;
+        }
+        
+        .popover.visible { opacity: 1; pointer-events: auto; }
+        
+        .popover::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: var(--c-ink) transparent transparent transparent;
+        }
+
+        /* VISUALIZATION COMPONENTS */
+        .viz-container {
+            background-color: var(--c-viz-bg);
+            border: 1px solid var(--c-grid);
+            border-radius: 4px;
+            padding: 2rem;
+            margin: 3rem 0;
+            position: relative;
+        }
+        
+        .viz-title {
+            font-family: var(--f-mono);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            color: var(--c-ink-soft);
+            margin-bottom: 1rem;
+            display: block;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 0.5rem;
+        }
+
+        .viz-caption {
+            margin-top: 1rem;
+            font-family: var(--f-serif);
+            font-style: italic;
+            font-size: 0.9rem;
+            color: var(--c-ink-soft);
+            text-align: center;
+        }
+
+        .viz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .viz-btn {
+            background: transparent;
+            border: 1px solid var(--c-ink);
+            padding: 0.5rem 1rem;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--c-ink);
+            transition: all 0.2s;
+        }
+
+        .viz-btn:hover { background: var(--c-grid); }
+        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); }
+
+        /* VIZ 1: Memory Bars */
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            padding: 1rem;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: 1rem;
+        }
+        .bar-label { width: 140px; text-align: right; font-weight: bold; color: var(--c-ink-soft); }
+        .bar-track { flex-grow: 1; background: #dcd9ce; height: 28px; position: relative; border-radius: 2px; overflow: hidden; border: 1px solid var(--c-grid); }
+        .bar-fill { height: 100%; background: var(--c-ink); transition: width 1s var(--easing-sharp); }
+        .bar-fill.accent { background: var(--c-accent); }
+        .bar-value { margin-left: 10px; font-weight: bold; }
+        
+        /* VIZ 2: Paged Grid */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 4px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .mem-block {
+            aspect-ratio: 1;
+            background: #dcd9ce;
+            border: 1px solid var(--c-grid);
+            transition: all 0.3s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--f-mono);
+            font-size: 10px;
+            color: var(--c-ink-soft);
+        }
+        .mem-block.occupied { background: var(--c-ink-soft); opacity: 0.3; }
+        .mem-block.active { background: var(--c-accent); transform: scale(1.1); z-index: 10; border-color: var(--c-ink); color: #fff; font-weight: bold; }
+        
+        .logical-stream {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+        }
+        .token {
+            padding: 8px 12px;
+            border: 1px solid var(--c-ink);
+            cursor: pointer;
+            background: var(--c-paper);
+            transition: 0.2s;
+        }
+        .token:hover { background: var(--c-ink); color: var(--c-paper); }
+
+        /* VIZ 3: Ring Animation (Fixed) */
+        .ring-svg {
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+            overflow: visible;
+        }
+        .ring-path { fill: none; stroke: var(--c-grid); stroke-width: 1; stroke-dasharray: 4 4; }
+        .gpu-node { fill: var(--c-paper); stroke: var(--c-ink); stroke-width: 2; }
+        .kv-packet { 
+            fill: var(--c-accent); 
+            stroke: var(--c-ink);
+            stroke-width: 1px;
+        }
+        
+        /* FOOTER */
+        footer {
+            padding: 6rem 3rem;
+            border-top: 1px solid var(--c-grid);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            margin-top: 6rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .footer-col { display: flex; flex-direction: column; gap: 1rem; }
+        .footer-links { display: flex; gap: 2rem; justify-content: flex-end; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RG.</div>
+        <div class="nav-links">
+            <a href="#" class="active">Essays</a>
+            <a href="#">Research</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="animate-enter">
+            <div class="mono caps" style="color: var(--c-accent); margin-bottom: 1rem;">November 2025 • Systems Architecture</div>
+            <h1>The Context Explosion: KV Cache & Ring Attention</h1>
+            <div class="mono" style="color: var(--c-ink-soft);">By Rachit Gupta</div>
+        </header>
+
+        <div class="animate-enter delay-1">
+            <p style="margin-top: 3rem;">
+                It has been a while since we popped the hood of a Transformer. If you have been following the Large Language Model (LLM) space recently—and let's be honest, if you are reading this, you probably have a terminal window open with <code class="mono">nvidia-smi</code> running right now—you have felt the ground shift.
+            </p>
+
+            <p>
+                For the better part of the last five years, the "arms race" in AI was defined almost exclusively by parameter count. <em>“How big is your model? 7B? 70B? 1.8T?”</em> It was the specific impulse of intelligence. It was the metric that defined capability. But recently, the battleground has shifted. We are no longer just asking how "smart" the model is (parameters, the long-term memory); we are asking how much it can hold in its <strong>working memory</strong> (context window).
+            </p>
+
+            <p>
+                We went from the standard 2k context window (the GPT-3 era), to 4k, to 32k. Then, seemingly overnight, Google dropped <strong>Gemini 1.5 Pro</strong> with a <strong>10 million token context window</strong><span class="citation" data-cit="Gemini 1.5">1</span>.
+            </p>
+
+            <blockquote>
+                <strong>Let’s sanity check that number: 10 million tokens.</strong><br>
+                That is roughly the entire <em>Lord of the Rings</em> trilogy, read 20 times over. It is the entire codebase of the Linux Kernel. It is a massive library of legal case files. It is 22 hours of audio or thousands of lines of code context. And the model isn't just "accessing" it like a static database; it is holding it in active memory, reasoning across the entire span simultaneously to find a "needle in a haystack" with near-perfect recall.
+            </blockquote>
+
+            <p>
+                But here is the catch that keeps systems engineers awake at night: <strong>Context is memory.</strong> And in the brutal, physical reality of GPU VRAM, infinite context requires infinite memory. Today, we are going to dive deep into the engineering marvels that prevent our GPUs from OOMing (Out of Memory) when we type a long prompt. We are going to derive the memory costs of the <strong>KV Cache</strong> from first principles, understand why it’s the bottleneck, and look at the distributed systems magic that lets us scale: <strong>Ring Attention</strong><span class="citation" data-cit="Ring Attention">2</span>.
+            </p>
+        </div>
+
+        <section class="animate-enter delay-2">
+            <h2>1. The First Principles of KV Cache</h2>
+            
+            <p>
+                To understand why long context is so computationally expensive, we must deconstruct the inference loop of the Transformer architecture. Recall that LLMs are <strong>autoregressive</strong>. This means they generate text one token at a time, modeling the conditional probability distribution:
+            </p>
+
+            <div class="math-block">
+                $$ p(x_t | x_{<t}) $$
+            </div>
+
+            <p>
+                To predict token $x_{100}$, the model must attend to tokens $x_{1} \dots x_{99}$. The core operation here is <strong>Scaled Dot-Product Attention</strong>. For every token at position $i$, we project the input embedding $x_i$ into three vectors: Query ($q_i$), Key ($k_i$), and Value ($v_i$).
+            </p>
+
+            <div class="math-block">
+                $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+            </div>
+
+            <p>
+                When generating the 100th token:
+                <ol>
+                    <li>We compute the query vector for the current position ($q_{100}$).</li>
+                    <li>We need to compare this query against the keys of <em>all</em> previous tokens ($k_1 \dots k_{99}$) via a dot product.</li>
+                    <li>We calculate the weighted sum of their values ($v_1 \dots v_{99}$).</li>
+                </ol>
+            </p>
+            <p>
+                <strong>The Waste:</strong> In a naive implementation, to generate token 100, you would pass the entire sequence (tokens 1–99) through the model to re-compute their $k$ and $v$ vectors. This is fundamentally wasteful. The representation of the word "The" at position 1 does not change just because we are currently generating a word at position 100. The model weights are frozen; the past is immutable.
+            </p>
+            <p>
+                <strong>The Fix:</strong> We simply <strong>cache</strong> the Key and Value vectors in GPU memory. We compute them once, store them, and retrieve them for every future step. This data structure is the <strong>KV Cache</strong>. It is a classic space-time tradeoff. We trade VRAM (Space) to save FLOPs (Time).
+            </p>
+
+            <h3>The Memory Wall Derivation</h3>
+            
+            <p>
+                Let’s do the back-of-the-envelope math to see just how big this cache gets. This is where the rubber meets the road. We will use a standard <strong>70B model</strong> (like Llama-3-70B) as our reference point.
+            </p>
+
+            <ul class="mono" style="list-style: none; color: var(--c-ink-soft); font-size: 0.8rem; margin-bottom: 2rem; border-left: 2px solid var(--c-grid); padding-left: 1rem;">
+                <li>Layers (L): 80</li>
+                <li>Hidden Dim (D): 8192</li>
+                <li>Heads (H): 64 (Assuming standard Multi-Head Attention for worst-case physics)</li>
+                <li>Head Dim (d): 128</li>
+                <li>Precision (P): 16-bit floats (2 bytes)</li>
+            </ul>
+
+            <p>
+                For every single token in the context, we must store a Key vector and a Value vector for every head in every layer.
+            </p>
+
+            <div class="math-block">
+                $$ \text{Size}_{\text{token}} = 2_{\text{(K\&V)}} \times L \times H \times d \times P $$
+                $$ \text{Size}_{\text{token}} = 2 \times 80 \times 64 \times 128 \times 2 \approx 2,621,440 \text{ bytes} \approx 2.6 \text{ MB} $$
+            </div>
+
+            <p>
+                <strong>2.6 MB per token.</strong> That doesn't sound too bad, right? It's smaller than an MP3 file. But linear growth is deceptive. Let's visualize what happens when we scale this to 128,000 tokens (GPT-4 turbo territory).
+            </p>
+
+            <!-- VISUALIZATION 1: MEMORY GROWTH -->
+            <div class="viz-container">
+                <span class="viz-title">Figure 1: The VRAM Context Wall</span>
+                
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <div class="bar-label">H100 Capacity</div>
+                        <div class="bar-track">
+                            <!-- H100 80GB -->
+                            <div class="bar-fill" style="width: 25%; background: var(--c-ink-soft);"></div>
+                            <span class="bar-value" style="font-size: 0.75rem; position: absolute; left: 26%;">80 GB (Limit)</span>
+                        </div>
+                    </div>
+
+                    <div class="bar-row">
+                        <div class="bar-label">Model Weights</div>
+                        <div class="bar-track">
+                             <!-- 70B Weights ~140GB in FP16 -->
+                            <div class="bar-fill" style="width: 44%;"></div>
+                            <span class="bar-value" style="font-size: 0.75rem; position: absolute; left: 45%;">140 GB</span>
+                        </div>
+                    </div>
+
+                    <div class="bar-row">
+                        <div class="bar-label">KV (128k)</div>
+                        <div class="bar-track">
+                            <!-- 332GB for 128k context -->
+                            <div class="bar-fill accent" style="width: 100%;"></div>
+                            <span class="bar-value" style="font-size: 0.75rem; position: absolute; right: 10px; color: white;">332 GB</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="viz-caption">
+                    Visualization Scale: 100% width = 350 GB. Note how KV Cache dwarfs the GPU capacity.
+                </div>
+            </div>
+
+            <p>
+                At 128k context, the KV Cache alone consumes <strong>332 GB</strong>. A single NVIDIA H100, the Ferrari of GPUs, has only 80GB of VRAM. You cannot even fit the <em>history</em> of the conversation on a single state-of-the-art GPU, let alone the model weights.
+            </p>
+            <p>
+                <em>Technical Note:</em> Modern models often use <strong>Grouped Query Attention (GQA)</strong>, which reduces the number of KV heads (e.g., from 64 to 8). This reduces the cache size by a factor of 8. However, even with GQA, a 10 million token context window would require <strong>3.2 Terabytes</strong> of cache. The thesis stands: if we want infinite context, we need infinite memory. We have hit a hardware wall.
+            </p>
+        </section>
+
+        <section class="animate-enter delay-3">
+            <h2>2. PagedAttention: Managing the Fragmentation</h2>
+            <p>
+                Before we can solve the sheer <em>capacity</em> problem, we have to solve the <em>efficiency</em> problem. In the "old days" of LLM serving (circa 2022), frameworks allocated contiguous blocks of memory for the KV cache.
+            </p>
+            <p>
+                If a user sent a request with <code>max_tokens=4096</code>, the system would reserve a contiguous 4096-token block in VRAM. If the user only typed "Hello world" and stopped, 99% of that memory was wasted. This is <strong>Internal Fragmentation</strong>. Furthermore, as sequences grew and shrank, memory became swiss-cheesed with small gaps, leading to <strong>External Fragmentation</strong>.
+            </p>
+            <p>
+                Enter <strong>PagedAttention</strong> (the core innovation behind the <strong>vLLM</strong> project)<span class="citation" data-cit="vLLM">3</span>. PagedAttention borrows directly from Operating Systems theory (paging). It breaks the KV cache into non-contiguous "pages" (blocks).
+            </p>
+            <ul>
+                <li><strong>Logical Memory:</strong> The tokens appear contiguous to the model. "Token 0, Token 1, Token 2..."</li>
+                <li><strong>Physical Memory:</strong> The blocks are scattered wherever space is available in VRAM. "Block A is at address 0x400. Block B is at address 0x900."</li>
+            </ul>
+
+            <div class="viz-container">
+                <span class="viz-title">Figure 2: Interactive Paged Memory Mapping</span>
+                <div class="logical-stream">
+                    <div class="token" onmouseover="highlightBlock(0)">Page 0</div>
+                    <div class="token" onmouseover="highlightBlock(1)">Page 1</div>
+                    <div class="token" onmouseover="highlightBlock(2)">Page 2</div>
+                    <div class="token" onmouseover="highlightBlock(3)">Page 3</div>
+                </div>
+                <div class="memory-grid" id="memGrid">
+                    <!-- Hardcoded layout for simulation -->
+                    <div class="mem-block occupied"></div><div class="mem-block occupied"></div><div class="mem-block occupied"></div><div class="mem-block occupied"></div>
+                    <div class="mem-block" id="phys-0">0</div><div class="mem-block occupied"></div><div class="mem-block"></div><div class="mem-block occupied"></div>
+                    <div class="mem-block occupied"></div><div class="mem-block" id="phys-1">1</div><div class="mem-block occupied"></div><div class="mem-block"></div>
+                    <div class="mem-block" id="phys-3">3</div><div class="mem-block occupied"></div><div class="mem-block" id="phys-2">2</div><div class="mem-block occupied"></div>
+                </div>
+                <div class="viz-caption">Hover over the "Logical Pages" above to see how they map to scattered Physical Memory blocks.</div>
+            </div>
+
+            <script>
+                function highlightBlock(id) {
+                    // Reset
+                    document.querySelectorAll('.mem-block').forEach(b => b.classList.remove('active'));
+                    // Highlight specific physical block
+                    const el = document.getElementById('phys-' + id);
+                    if(el) el.classList.add('active');
+                }
+            </script>
+
+            <p>
+                A "Block Table" maps the logical tokens to physical blocks. This allows us to fill the GPU memory to near 100% utilization, handling fragmentation and allowing for much higher throughput. But PagedAttention is a memory <em>manager</em>. It is not a memory <em>creator</em>. If your context requires 3TB and you have 80GB, paging won't save you. To go beyond the single GPU, we need to break the ring.
+            </p>
+        </section>
+
+        <section>
+            <h2>3. Ring Attention: Breaking the Single-GPU Limit</h2>
+            <p>
+                This is the main event. To fit a 10M context window, we must split the context across multiple GPUs. This is known as <strong>Sequence Parallelism</strong>.
+            </p>
+            <p>
+                Imagine we have 4 GPUs. We put the first 2.5M tokens on GPU 0, the next 2.5M on GPU 1, and so on. The problem arises when GPU 3 needs to compute attention for its tokens. Attention is global. To calculate the attention for token #9,000,000 (which lives on GPU 3), it needs to look at the Keys and Values of token #5 (which lives on GPU 0).
+            </p>
+            <p>
+                If we just blindly requested that data (an operation called <code>AllGather</code>), we would clog the NVLink interconnects instantly. The communication latency would kill the performance. We are trading a memory problem for a bandwidth problem.
+            </p>
+
+            <h3>The "Bucket Brigade" Algorithm</h3>
+            <p>
+                <strong>Ring Attention</strong> solves this by pipelining the communication and computation. We organize the GPUs in a logical ring.
+            </p>
+            <ol>
+                <li><strong>Compute:</strong> GPU $i$ computes attention between its local Query ($Q_i$) and the Key/Value block it is <em>currently holding</em>.</li>
+                <li><strong>Communicate:</strong> Simultaneously, GPU $i$ sends the K/V block to GPU $i+1$ and receives a new K/V block from GPU $i-1$.</li>
+                <li><strong>Overlap:</strong> The magic happens here. The matrix multiplication (Compute) is $O(N^2)$, while the data transfer is $O(N)$. If we tune the block size correctly, <strong>computation takes longer than communication.</strong> This means the data transfer happens entirely in the background. The communication cost is effectively <strong>zero</strong>.</li>
+            </ol>
+
+            <!-- VISUALIZATION 3: RING ATTENTION (JS ENGINE) -->
+            <div class="viz-container">
+                <span class="viz-title">Figure 3: Ring Attention Engine</span>
+                
+                <svg id="viz-ring" viewBox="0 0 500 500" style="width: 100%; height: auto;">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#1A1C1B" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- Ring Path -->
+                    <circle cx="250" cy="250" r="140" class="ring-path" />
+
+                    <!-- Connections -->
+                    <path d="M 250 110 Q 350 110 370 160" opacity="0.3" stroke="#D1CEC4" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <path d="M 390 250 Q 390 350 340 370" opacity="0.3" stroke="#D1CEC4" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <path d="M 250 390 Q 150 390 130 340" opacity="0.3" stroke="#D1CEC4" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <path d="M 110 250 Q 110 150 160 130" opacity="0.3" stroke="#D1CEC4" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                    <!-- Nodes (Static) -->
+                    <g id="gpu-0"><rect x="220" y="50" width="60" height="60" rx="4" class="gpu-node"/><text x="250" y="75" text-anchor="middle" class="mono" font-size="12">GPU 0</text><text x="250" y="95" text-anchor="middle" class="mono" font-size="10" fill="#D64000">Q0</text></g>
+                    <g id="gpu-1"><rect x="390" y="220" width="60" height="60" rx="4" class="gpu-node"/><text x="420" y="245" text-anchor="middle" class="mono" font-size="12">GPU 1</text><text x="420" y="265" text-anchor="middle" class="mono" font-size="10" fill="#D64000">Q1</text></g>
+                    <g id="gpu-2"><rect x="220" y="390" width="60" height="60" rx="4" class="gpu-node"/><text x="250" y="415" text-anchor="middle" class="mono" font-size="12">GPU 2</text><text x="250" y="435" text-anchor="middle" class="mono" font-size="10" fill="#D64000">Q2</text></g>
+                    <g id="gpu-3"><rect x="50" y="220" width="60" height="60" rx="4" class="gpu-node"/><text x="80" y="245" text-anchor="middle" class="mono" font-size="12">GPU 3</text><text x="80" y="265" text-anchor="middle" class="mono" font-size="10" fill="#D64000">Q3</text></g>
+
+                    <!-- Orbiting Group (Controlled by JS) -->
+                    <g id="orbit-system">
+                        <!-- We will inject blocks here via JS -->
+                    </g>
+                    
+                    <!-- Status Text -->
+                    <text x="250" y="255" text-anchor="middle" class="mono" id="ring-status" font-size="14" fill="#1A1C1B">STATUS: PAUSED</text>
+                </svg>
+
+                <div class="viz-controls">
+                    <button class="viz-btn" id="btn-toggle" onclick="toggleRing()">Play / Pause</button>
+                </div>
+                <div class="viz-caption">
+                    The yellow KV blocks rotate around the ring. The Q blocks (Compute) stay stationary.
+                </div>
+            </div>
+
+            <script>
+                // JavaScript-Driven Animation for Perfect Orbiting without Rotation Artifacts
+                const ringConfig = {
+                    cx: 250, cy: 250, radius: 140, numBlocks: 4, speed: 0.005
+                };
+                
+                let angle = 0;
+                let isAnimating = false;
+                let animationId = null;
+
+                const orbitSystem = document.getElementById('orbit-system');
+                const blocks = [];
+
+                // Initialize Blocks
+                for(let i=0; i<ringConfig.numBlocks; i++) {
+                    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    
+                    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    rect.setAttribute("width", 30);
+                    rect.setAttribute("height", 30);
+                    rect.setAttribute("x", -15);
+                    rect.setAttribute("y", -15);
+                    rect.setAttribute("rx", 4);
+                    rect.setAttribute("class", "kv-packet");
+
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.textContent = "KV";
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("dy", "5"); // vertical align
+                    text.setAttribute("class", "mono");
+                    text.setAttribute("font-size", "10");
+                    text.setAttribute("fill", "#1A1C1B");
+                    text.setAttribute("font-weight", "bold");
+
+                    group.appendChild(rect);
+                    group.appendChild(text);
+                    orbitSystem.appendChild(group);
+                    
+                    // Offset each block by 90 degrees (PI/2)
+                    // Start them at top (angle -PI/2)
+                    blocks.push({ el: group, offset: (i * Math.PI / 2) - (Math.PI/2) });
+                }
+
+                function renderFrame() {
+                    if (!isAnimating) return;
+                    
+                    angle += ringConfig.speed;
+                    
+                    blocks.forEach(block => {
+                        const theta = angle + block.offset;
+                        const x = ringConfig.cx + ringConfig.radius * Math.cos(theta);
+                        const y = ringConfig.cy + ringConfig.radius * Math.sin(theta);
+                        block.el.setAttribute("transform", `translate(${x}, ${y})`);
+                    });
+
+                    animationId = requestAnimationFrame(renderFrame);
+                }
+
+                function toggleRing() {
+                    const btn = document.getElementById('btn-toggle');
+                    const status = document.getElementById('ring-status');
+
+                    if (isAnimating) {
+                        isAnimating = false;
+                        cancelAnimationFrame(animationId);
+                        btn.textContent = "Resume Simulation";
+                        btn.classList.remove('active');
+                        status.textContent = "STATUS: PAUSED";
+                        status.setAttribute("fill", "#1A1C1B");
+                    } else {
+                        isAnimating = true;
+                        renderFrame();
+                        btn.textContent = "Pause Simulation";
+                        btn.classList.add('active');
+                        status.textContent = "STATUS: ORBITING (Async Transfer)";
+                        status.setAttribute("fill", "#D64000");
+                    }
+                }
+
+                // Initial Render Position
+                blocks.forEach(block => {
+                    const theta = block.offset;
+                    const x = ringConfig.cx + ringConfig.radius * Math.cos(theta);
+                    const y = ringConfig.cy + ringConfig.radius * Math.sin(theta);
+                    block.el.setAttribute("transform", `translate(${x}, ${y})`);
+                });
+            </script>
+
+            <h3>The Mathematical Trick: Online Softmax</h3>
+            <p>
+                There is a subtle mathematical problem. The standard Softmax function requires the sum of <em>all</em> scores to normalize probabilities:
+            </p>
+            <div class="math-block">
+                $$ \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j} e^{x_j}} $$
+            </div>
+            <p>
+                If we process the data in blocks, we don't know the denominator ($\sum e^{x_j}$) until we have seen the very last block at the end of the ring! We cannot wait until the end to start normalizing, or we would need to store all raw scores (O($N^2$) memory), which defeats the purpose.
+            </p>
+            <p>
+                To solve this, Ring Attention uses the <strong>Online Softmax</strong> trick (popularized by FlashAttention). We maintain running statistics. Let $m$ be the running maximum score and $l$ be the running sum of exponentials. When a new block of Keys/Values arrives, we update our statistics and "correct" the output accumulator on the fly.
+            </p>
+            <p>
+                By the time the ring completes a full rotation, every GPU has computed the exact global attention output, but it never held more than one block of K/V in memory at a time.
+            </p>
+        </section>
+
+        <section>
+            <h2>4. The Wildcard: Streaming the Internet</h2>
+            <p>
+                If context is memory, and memory scales linearly with hardware, we are approaching a philosophical shift in AI architecture.
+            </p>
+            <p>
+                Currently, we rely heavily on <strong>RAG (Retrieval Augmented Generation)</strong>. We take a user query, search a vector database, find the top 5 "relevant" snippets, and paste them into the prompt. This is a hack. It is lossy. If the search algorithm misses the relevant legal precedent, the LLM never sees it.
+            </p>
+            <p>
+                With Ring Attention, the "Context Window" becomes a "Context Stream." Why search for the top 5 snippets? Why not just stream the <strong>entire</strong> database into the context? Imagine a future where you don't fine-tune a model on medical textbooks. Instead, when you ask a medical question, the system spins up a Ring Attention job, streams the <em>entirety</em> of PubMed into the context window, and the model attends to it live.
+            </p>
+            <p>
+                We are moving from <strong>Stateless Inference</strong> (Input $\to$ Output) to <strong>Stateful Cognition</strong>. The model creates a massive, rotating buffer of reality that it keeps "alive" in the ring.
+            </p>
+            <p>
+                However, there is a catch: <strong>Compute is still Quadratic.</strong> Even if Ring Attention solves the <em>memory</em> problem, the <em>compute</em> cost of attention is still $O(N^2)$. Processing 10M tokens takes $100\times$ more FLOPs than processing 1M tokens. This means <strong>Time-To-First-Token (TTFT)</strong> becomes the new bottleneck. We might have to wait minutes for the model to "read" the book before it can answer. But once it has read it? It knows everything.
+            </p>
+            <p>Happy hacking.</p>
+        </section>
+
+        <footer>
+            <div class="footer-col">
+                <div class="logo">RG.</div>
+                <div>System Architecture & AI</div>
+            </div>
+            <div class="footer-col">
+                <div class="footer-links">
+                    <a href="#">Twitter</a>
+                    <a href="#">GitHub</a>
+                    <a href="#">RSS</a>
+                </div>
+            </div>
+            <div style="grid-column: span 2; margin-top: 2rem; font-size: 0.75rem; opacity: 0.6;">
+                &copy; 2025 Rachit Gupta. Typeset in Newsreader & JetBrains Mono.
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Citations Popover Container -->
+    <div id="citation-popover" class="popover"></div>
+
+    <script>
+        // --- Citation Logic ---
+        const citations = {
+            "Gemini 1.5": "Google (2024). 'Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context'.",
+            "Ring Attention": "Hao Liu, Matei Zaharia, Pieter Abbeel (2023). 'Ring Attention with Blockwise Transformers for Near-Infinite Context'.",
+            "vLLM": "Kwon et al. (2023). 'Efficient Memory Management for Large Language Model Serving with PagedAttention'."
+        };
+
+        const popover = document.getElementById('citation-popover');
+        document.querySelectorAll('.citation').forEach(cit => {
+            cit.addEventListener('mouseenter', (e) => {
+                const key = e.target.getAttribute('data-cit');
+                popover.textContent = citations[key];
+                popover.classList.add('visible');
+                // Positioning
+                const rect = e.target.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                popover.style.top = (rect.top + scrollTop - popover.offsetHeight - 10) + 'px';
+            });
+            cit.addEventListener('mouseleave', () => {
+                popover.classList.remove('visible');
+            });
+        });
+    </script>
+</body>
+</html>

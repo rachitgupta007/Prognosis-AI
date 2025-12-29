@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Living Model | Rachit Gupta</title>
+    
+    <!-- Typography: Newsreader (Serif) & JetBrains Mono (Code/Math) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+    
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* --- DESIGN SYSTEM PROVIDED --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 19px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-enter {
+            animation: fadeInUp 0.8s var(--easing-sharp) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* UTILITY */
+        .mono {
+            font-family: var(--f-mono);
+            letter-spacing: -0.03em;
+            font-size: 0.85rem;
+        }
+
+        .caps {
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+
+        a:hover {
+            border-color: var(--c-accent);
+        }
+
+        /* NAVIGATION */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid rgba(26, 28, 27, 0.05);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            font-family: var(--f-mono);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.6;
+            border: none;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            opacity: 1;
+            color: var(--c-accent);
+        }
+
+        /* CITATIONS & POPOVERS */
+        .citation {
+            vertical-align: super;
+            font-size: 0.7em;
+            color: var(--c-accent);
+            cursor: pointer;
+            margin-left: 2px;
+            font-family: var(--f-mono);
+            position: relative;
+            font-weight: bold;
+            border-bottom: none;
+        }
+
+        .popover {
+            position: absolute;
+            background: var(--c-ink);
+            color: var(--c-paper);
+            padding: 1rem;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 0.8rem;
+            font-family: var(--f-mono);
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            line-height: 1.4;
+            transform: translateY(10px);
+            left: 50%;
+            margin-left: -150px;
+        }
+
+        .popover.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .popover::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px 6px 0;
+            border-style: solid;
+            border-color: var(--c-ink) transparent transparent transparent;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 6rem 3rem;
+            border-top: 1px solid var(--c-grid);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            margin-top: 6rem;
+        }
+
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: flex-end;
+        }
+
+        /* VISUALIZATION CONTROLS */
+        .viz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .viz-btn {
+            background: transparent;
+            border: 1px solid var(--c-grid);
+            padding: 0.5rem 1rem;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: var(--c-ink-soft);
+            transition: all 0.2s;
+        }
+
+        .viz-btn:hover {
+            border-color: var(--c-ink);
+            color: var(--c-ink);
+        }
+
+        .viz-btn.active {
+            background: var(--c-ink);
+            color: var(--c-paper);
+            border-color: var(--c-ink);
+        }
+
+        /* --- ARTICLE LAYOUT --- */
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 140px 24px 60px 24px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            line-height: 1.1;
+            font-weight: 700; /* Newsreader Bold */
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 4rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.01em;
+            border-top: 1px solid var(--c-grid);
+            padding-top: 2rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            font-style: italic;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--c-ink);
+        }
+
+        p { margin-bottom: 1.5rem; font-weight: 400; color: #2a2c2b; }
+
+        li { margin-bottom: 0.5rem; margin-left: 1.5rem; color: var(--c-ink); }
+
+        blockquote {
+            border-left: 2px solid var(--c-accent);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: var(--c-ink-soft);
+        }
+
+        /* VISUALIZATION WRAPPER */
+        figure {
+            margin: 3rem 0;
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            padding: 1rem;
+            border-radius: 2px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #fff;
+            cursor: crosshair;
+        }
+
+        figcaption {
+            margin-top: 1rem;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            color: var(--c-ink-soft);
+            text-align: center;
+            border-top: 1px dashed var(--c-grid);
+            padding-top: 0.8rem;
+        }
+        
+        @media(max-width: 600px) {
+            .container { padding-top: 100px; }
+            h1 { font-size: 2.2rem; }
+            .nav-links { display: none; }
+            footer { grid-template-columns: 1fr; gap: 2rem; }
+            .footer-links { justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RG.</div>
+        <div class="nav-links">
+            <a href="#">Essays</a>
+            <a href="#">Research</a>
+            <a href="#" class="active">Living Models</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="animate-enter">
+            <div class="mono caps" style="color: var(--c-accent); margin-bottom: 1rem;">Machine Learning Theory</div>
+            <h1>The Living Model</h1>
+            <div class="mono" style="color: var(--c-ink-soft); margin-top: 1rem;">
+                By Rachit Gupta &bull; December 2025 &bull; 25 min read
+            </div>
+        </header>
+
+        <article>
+            <p class="animate-enter delay-1">
+                There is a distinct, almost melancholic quality to interacting with today’s Large Language Models. It is a feeling that creeps in immediately after the initial awe of their capability fades.
+            </p>
+            <p class="animate-enter delay-2">
+                You converse with a model, and it displays brilliance. It reasons through complex topology, debugs a race condition in C++, or translates Ovid. It feels... <em>present</em>. But the moment you close the session, that "presence" evaporates. When you return, the model has forgotten you. It has forgotten the context you built, the nuance of your preferences, and the error gradients you implicitly provided during your interaction. It is exactly the same tabula rasa it was yesterday, and the day it was compiled in a GPU cluster years ago.
+            </p>
+            <p class="animate-enter delay-3">
+                <strong>The model is dead.</strong> Not in the biological sense—it never lived—but in the thermodynamic sense. It is a closed system. It is a statue. Despite the "biological" nomenclature we borrow (neurons, attention, heads), the deployment lifecycle of these models is profoundly un-biological.
+            </p>
+            <p class="animate-enter delay-3">
+                Biology does not recognize a dichotomy between "Training" and "Inference." You do not attend school for 18 years, lock your synaptic weights, and spend the remainder of your life merely running forward passes. You learn while you work. The next frontier of AI is the shift from Static Intelligence to Fluid Intelligence—models that engage in <strong>Online Learning</strong> and <strong>Test-Time Training (TTT)</strong>.
+            </p>
+
+            <!-- SECTION 1 -->
+            <h2 class="animate-enter">1. The Math of Stagnation</h2>
+            <p>
+                To understand the necessity of this shift, we must rigorously examine the current paradigm, often termed "Software 2.0." The lifecycle of a Foundation Model is a waterfall process defined by a distinct optimization boundary.
+            </p>
+            <p>
+                Mathematically, we solve the following optimization problem over a static dataset $\mathcal{D}$ containing $N$ tokens:
+            </p>
+            <div style="overflow-x: auto; padding: 1rem 0; text-align: center;">
+                $$ \theta^* = \underset{\theta}{\mathrm{argmin}} \frac{1}{N} \sum_{i=1}^{N} \mathcal{L}(f(x_i; \theta), y_i) $$
+            </div>
+            <p>
+                Upon finding $\theta^*$, we execute a "stop gradient" operation. The weights are crystallized. When a user queries the model at time $t_{now}$, they are effectively querying a compressed, lossy snapshot of the distribution $P(x)$ as it existed at time $t_{train}$.
+            </p>
+            <p>
+                This assumes that the data distribution is <strong>stationary</strong>—that $P_{train}(x, y) \approx P_{inference}(x, y)$. In reality, the world is <strong>non-stationary</strong>. APIs change, cultural slang evolves, and political landscapes shift. This divergence is known as <em>Concept Drift</em>.
+            </p>
+
+            <figure>
+                <canvas id="viz-drift"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="app.drift.reset()">Replay Simulation</button>
+                </div>
+                <figcaption>
+                    <strong>Figure 1: Regret Minimization under Non-Stationarity.</strong><br>
+                    The "Static Model" (Red) relies on $\theta^*$ optimized for $t < 80$. As the ground truth (dashed line) drifts, the loss explodes. The "Online Model" (Black) performs continuous SGD updates, maintaining bounded regret.
+                </figcaption>
+            </figure>
+
+            <p>
+                The red curve in Figure 1 represents the tragedy of the frozen brain. The error does not plateau; it compounds. The online learner, however, exhibits what Zinkevich <span class="citation" data-ref="Zinkevich">[Zinkevich, 2003]</span> termed <strong>No-Regret Learning</strong>. Even though it can never perfectly predict the noise, its cumulative difference from the optimal dynamic solution grows sub-linearly.
+            </p>
+
+            <!-- SECTION 2 -->
+            <h2>2. Test-Time Training: The Inner Loop</h2>
+            <p>
+                True Online Learning updates the global weights permanently. This poses safety risks (data poisoning). A more subtle, powerful approach has recently emerged: <strong>Test-Time Training (TTT)</strong>.
+            </p>
+            <p>
+                In standard Transformers, "memory" is stored in the KV-Cache (a buffer of past activations). TTT proposes a radical shift: <strong>Memory should be weights, not states.</strong>
+            </p>
+            <p>
+                Consider the hidden state $h_t$ of an RNN. In TTT, we replace $h_t$ with a set of temporary weights $W_t$. When a new token $x_t$ arrives, we do not merely process it; we run an optimization loop <em>inside</em> the forward pass.
+            </p>
+            <div style="background: rgba(0,0,0,0.03); padding: 1.5rem; border-radius: 4px; font-family: var(--f-mono); font-size: 0.8rem; margin: 1.5rem 0; text-align: center;">
+                <span style="color: var(--c-ink-soft);"># The TTT Update Rule</span><br><br>
+                $\theta_{local} \leftarrow \theta - \eta \nabla_\theta \mathcal{L}_{aux}(x_t)$
+            </div>
+            <p>
+                The model effectively "learns the prompt." It compresses the specific context of the user interaction into a linear model optimized on the fly. This transforms the inference process from a static function evaluation into a dynamic trajectory on the loss manifold.
+            </p>
+
+            <figure>
+                <canvas id="viz-manifold"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn" onclick="app.manifold.trigger()">Trigger Gradient Step</button>
+                </div>
+                <figcaption>
+                    <strong>Figure 2: The Inference Manifold.</strong><br>
+                    Standard inference sits statically at the red dot (Generic Weights). TTT performs a gradient descent step <em>during inference</em>, moving the state toward the local minimum (Green Star) specific to the current context.
+                </figcaption>
+            </figure>
+
+            <!-- SECTION 3 -->
+            <h2>3. The Stability-Plasticity Dilemma</h2>
+            <p>
+                If continuous learning is so superior, why do we not simply leave `model.train()` on forever?
+            </p>
+            <p>
+                The answer lies in the geometry of high-dimensional optimization. Neural networks suffer from <strong>Catastrophic Forgetting</strong>. Because representations are distributed, updating the weights to learn "Task B" (e.g., Python 3.12 syntax) often alters the interference patterns required for "Task A" (e.g., Latin grammar).
+            </p>
+            <p>
+                This is the <strong>Stability-Plasticity Dilemma</strong>. We need a system that is plastic enough to learn new data, but stable enough to preserve old structures.
+            </p>
+            <h3>Elastic Weight Consolidation (EWC)</h3>
+            <p>
+                One elegant solution, proposed by DeepMind <span class="citation" data-ref="EWC">[Kirkpatrick et al., 2017]</span>, frames this as a physical constraint problem. We can measure the "importance" of each parameter to previous tasks using the <strong>Fisher Information Matrix</strong>, $F$.
+            </p>
+            <p>
+                If a weight $\theta_i$ has a high value in $F$, it means the loss surface is very curved along that dimension—changing it will drastically increase error on old tasks. We effectively attach a "virtual spring" to these weights.
+            </p>
+            <div style="overflow-x: auto; padding: 1rem 0; text-align: center;">
+                $$ \mathcal{L}_{total}(\theta) = \mathcal{L}_{new}(\theta) + \sum_{i} \frac{\lambda}{2} F_i (\theta_i - \theta_{old,i})^2 $$
+            </div>
+
+            <figure>
+                <canvas id="viz-springs"></canvas>
+                <div class="viz-controls">
+                    <button class="viz-btn active" onclick="app.springs.applyForce()">Apply Learning Force</button>
+                    <button class="viz-btn" onclick="app.springs.reset()">Reset</button>
+                </div>
+                <figcaption>
+                    <strong>Figure 3: Physics of Elastic Weight Consolidation.</strong><br>
+                    Weights (circles) are anchored to their previous values. The "Stiffness" of the spring represents the Fisher Information $F_i$. High-importance weights (thick springs) resist movement, preserving old knowledge. Low-importance weights (thin springs) adapt freely to the new task (Red Force).
+                </figcaption>
+            </figure>
+
+            <p>
+                In the simulation above, notice how the weights with "thick" springs barely move when the force of new learning (red arrow) is applied. They preserve the structural integrity of the past. The weights with loose springs, however, stretch significantly, absorbing the new information. The model performs "intellectual yoga"—stretching only where it is flexible.
+            </p>
+
+            <!-- SECTION 4 -->
+            <h2>4. Toward Hebbian Architectures</h2>
+            <p>
+                The ultimate conclusion of this logic is the dissolution of the monolithic model. We are moving toward <strong>Personalized Adapters</strong>.
+            </p>
+            <p>
+                Imagine a future where your local device does not just run a quantized version of GPT-5. It runs a Low-Rank Adapter (LoRA) that is exclusively yours. It updates via <strong>Hebbian Learning</strong> principles—"neurons that fire together, wire together."
+            </p>
+            <p>
+                Every time you correct the model, it doesn't just apologize; it performs a local backpropagation pass. It strengthens the synaptic pathways associated with your specific domain (be it React code or Legal contracts) and decays the pathways that lead to hallucinations.
+            </p>
+
+            <figure>
+                <canvas id="viz-hebbian"></canvas>
+                <div class="viz-controls">
+                    <span class="mono" style="font-size: 0.75rem; color: var(--c-accent);">● LIVE SIMULATION (ACTIVITY DEPENDENT)</span>
+                </div>
+                <figcaption>
+                    <strong>Figure 4: Hebbian Plasticity.</strong><br>
+                    A visualization of edge-weight reinforcement. As signals propagate through specific paths (randomly selected), the connections thicken (Long-Term Potentiation). Unused connections decay (Long-Term Depression).
+                </figcaption>
+            </figure>
+
+            <h3>Conclusion</h3>
+            <p>
+                The era of the "Frozen Brain" is likely a historical anomaly—a limitation of our current hardware constraints and optimization algorithms, not a fundamental law of intelligence.
+            </p>
+            <p>
+                By combining Online Convex Optimization, Test-Time Training, and Elastic Weight Consolidation, we are laying the groundwork for models that exist in the present tense. The model of 2030 will not have a "Training Cutoff." Its cutoff will be <em>now</em>.
+            </p>
+        </article>
+
+        <footer>
+            <div class="footer-col">
+                <strong>Rachit Gupta</strong>
+                <div>Machine Learning Researcher & Engineer.</div>
+                <div style="opacity: 0.6">&copy; 2025. All rights reserved.</div>
+            </div>
+            <div class="footer-col footer-links">
+                <a href="#">Twitter</a>
+                <a href="#">Github</a>
+                <a href="#">Scholar</a>
+                <a href="#">RSS</a>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- POPOVERS -->
+    <div id="Zinkevich" style="display:none;">
+        <strong>M. Zinkevich (2003).</strong><br>
+        "Online Convex Programming and Generalized Infinitesimal Gradient Ascent". <em>ICML 2003</em>.<br>
+        Establishes the $O(\sqrt{T})$ regret bound for OGD.
+    </div>
+    <div id="EWC" style="display:none;">
+        <strong>Kirkpatrick et al. (2017).</strong><br>
+        "Overcoming catastrophic forgetting in neural networks". <em>PNAS</em>.<br>
+        Introduces the use of the Fisher Information Matrix for regularization.
+    </div>
+
+    <!-- VISUALIZATION ENGINE -->
+    <script>
+        const app = {
+            colors: {
+                paper: '#F2F0E6',
+                ink: '#1A1C1B',
+                accent: '#D64000',
+                grid: '#D1CEC4',
+                inkSoft: '#4A4D4B'
+            },
+            
+            // Helper to handle High DPI Canvas
+            setupCanvas(id, height) {
+                const canvas = document.getElementById(id);
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+                
+                canvas.width = rect.width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+                canvas.style.height = `${height}px`;
+                
+                return { canvas, ctx, width: rect.width, height };
+            },
+
+            // =========================================
+            // VIZ 1: DRIFT (Concept Drift & Regret)
+            // =========================================
+            drift: {
+                instance: null,
+                init() {
+                    const { ctx, width, height } = app.setupCanvas('viz-drift', 300);
+                    let t = 0;
+                    const steps = 400;
+                    let batchData = [], onlineData = [], truthData = [];
+                    
+                    let trueVal = 0.5;
+                    let batchVal = 0.5;
+                    let onlineVal = 0.5;
+                    
+                    function loop() {
+                        if (t > steps) return;
+                        
+                        // 1. Drift Logic (Sine wave + Linear Trend)
+                        trueVal = 0.5 + Math.sin(t * 0.02) * 0.3 + (t/steps) * 0.2;
+                        
+                        // 2. Batch (Freezes at t=80)
+                        if(t < 80) batchVal = trueVal; // Perfect training
+                        let batchLoss = Math.abs(batchVal - trueVal);
+                        
+                        // 3. Online (SGD with momentum)
+                        // Grad = (pred - target)
+                        let lr = 0.1;
+                        onlineVal = onlineVal - lr * (onlineVal - trueVal);
+                        // Add noise
+                        onlineVal += (Math.random() - 0.5) * 0.05;
+                        let onlineLoss = Math.abs(onlineVal - trueVal);
+
+                        truthData.push(trueVal);
+                        batchData.push(batchLoss);
+                        onlineData.push(onlineLoss);
+                        
+                        // Render
+                        ctx.fillStyle = app.colors.paper;
+                        ctx.fillRect(0,0,width,height);
+                        
+                        // Draw Grid
+                        ctx.strokeStyle = '#e0ded5';
+                        ctx.lineWidth = 1;
+                        for(let i=0; i<width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,height); ctx.stroke(); }
+                        
+                        // Draw Cutoff Line
+                        const cutoffX = (80/steps) * width;
+                        ctx.strokeStyle = app.colors.inkSoft;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath(); ctx.moveTo(cutoffX, 0); ctx.lineTo(cutoffX, height); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = app.colors.inkSoft;
+                        ctx.font = '12px JetBrains Mono';
+                        ctx.fillText("Freezing Point", cutoffX + 5, 20);
+
+                        // Helper to draw lines
+                        const drawLine = (data, color, isDashed=false, offset=0) => {
+                            ctx.beginPath();
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 2;
+                            if(isDashed) ctx.setLineDash([5, 5]); else ctx.setLineDash([]);
+                            
+                            for(let i=0; i<data.length; i++) {
+                                let x = (i/steps) * width;
+                                // Map 0..1 to height
+                                let y = height - (data[i] * (height/1.5)) - offset;
+                                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                            }
+                            ctx.stroke();
+                        };
+                        
+                        // Draw Truth (Abstract representation)
+                        drawLine(truthData, '#bbb', true, 50);
+                        
+                        // Draw Losses
+                        drawLine(batchData, app.colors.accent); // Red
+                        drawLine(onlineData, app.colors.ink);   // Black
+
+                        t++;
+                        app.drift.instance = requestAnimationFrame(loop);
+                    }
+                    loop();
+                },
+                reset() {
+                    cancelAnimationFrame(app.drift.instance);
+                    app.drift.init();
+                }
+            },
+
+            // =========================================
+            // VIZ 2: MANIFOLD (Gradient Descent)
+            // =========================================
+            manifold: {
+                instance: null,
+                ball: { x: 0, y: 0 },
+                target: { x: 0, y: 0 },
+                
+                init() {
+                    const { ctx, width, height } = app.setupCanvas('viz-manifold', 350);
+                    const cx = width/2;
+                    const cy = height/2;
+                    
+                    this.ball = { x: cx + 120, y: cy - 100 };
+                    this.target = { x: cx, y: cy };
+                    
+                    const draw = () => {
+                        ctx.fillStyle = app.colors.paper;
+                        ctx.fillRect(0, 0, width, height);
+                        
+                        // Draw Contour Map (Topographic style)
+                        ctx.lineWidth = 1;
+                        for(let r=250; r>0; r-=25) {
+                            ctx.beginPath();
+                            // Distorted circles to look like a landscape
+                            for(let a=0; a<=Math.PI*2; a+=0.1) {
+                                let r_noise = r + Math.sin(a*3)*10 + Math.cos(a*5)*10;
+                                let x = cx + Math.cos(a) * r_noise;
+                                let y = cy + Math.sin(a) * r_noise * 0.6; // Flatten perspective
+                                if(a===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                            }
+                            ctx.strokeStyle = `rgba(26, 28, 27, ${0.05 + (250-r)/800})`;
+                            ctx.stroke();
+                        }
+                        
+                        // Draw Path line
+                        ctx.beginPath();
+                        ctx.moveTo(cx + 120, cy - 100);
+                        ctx.lineTo(this.ball.x, this.ball.y);
+                        ctx.strokeStyle = app.colors.accent;
+                        ctx.setLineDash([5,5]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // Draw Ball (Current State)
+                        ctx.beginPath();
+                        ctx.arc(this.ball.x, this.ball.y, 6, 0, Math.PI*2);
+                        ctx.fillStyle = app.colors.ink;
+                        ctx.fill();
+                        ctx.strokeStyle = app.colors.paper;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Draw Minima
+                        ctx.fillStyle = app.colors.accent;
+                        ctx.font = '20px Arial';
+                        ctx.fillText("★", cx-10, cy+8);
+                        
+                        app.manifold.instance = requestAnimationFrame(draw);
+                    };
+                    draw();
+                },
+                
+                trigger() {
+                    // Simple easing animation to simulate gradient step
+                    const step = () => {
+                        this.ball.x += (this.target.x - this.ball.x) * 0.05;
+                        this.ball.y += (this.target.y - this.ball.y) * 0.05;
+                        if(Math.abs(this.ball.x - this.target.x) > 1) {
+                            requestAnimationFrame(step);
+                        }
+                    };
+                    step();
+                }
+            },
+
+            // =========================================
+            // VIZ 3: SPRINGS (EWC Physics)
+            // =========================================
+            springs: {
+                instance: null,
+                weights: [],
+                mouseForce: 0,
+                
+                init() {
+                    const { ctx, width, height } = app.setupCanvas('viz-springs', 300);
+                    
+                    // Create 6 weights with different "Fisher Information" (stiffness)
+                    this.weights = [];
+                    for(let i=0; i<6; i++) {
+                        this.weights.push({
+                            anchorX: (width/7) * (i+1),
+                            anchorY: 100,
+                            x: (width/7) * (i+1),
+                            y: 100,
+                            vy: 0,
+                            // Stiffness: Middle ones are stiff (Old knowledge), Edges are loose (Plastic)
+                            k: (i === 2 || i === 3) ? 0.2 : 0.01, 
+                            mass: 1
+                        });
+                    }
+
+                    const loop = () => {
+                        ctx.clearRect(0,0,width,height);
+                        ctx.fillStyle = app.colors.paper;
+                        ctx.fillRect(0,0,width,height);
+
+                        // Draw force indicator
+                        if(this.mouseForce > 0) {
+                            ctx.fillStyle = 'rgba(214, 64, 0, 0.1)';
+                            ctx.fillRect(0, 150, width, 150);
+                            ctx.fillStyle = app.colors.accent;
+                            ctx.font = '12px JetBrains Mono';
+                            ctx.fillText("▼ NEW TASK GRADIENT PRESSURE ▼", width/2 - 100, 280);
+                        }
+
+                        this.weights.forEach(w => {
+                            // Physics: F = -kx + F_external
+                            let displacement = w.y - w.anchorY;
+                            let springForce = -w.k * displacement;
+                            let externalForce = this.mouseForce; 
+                            
+                            // Damping
+                            let damping = -0.1 * w.vy;
+                            
+                            let a = (springForce + externalForce + damping) / w.mass;
+                            w.vy += a;
+                            w.y += w.vy;
+
+                            // Draw Spring
+                            ctx.beginPath();
+                            ctx.moveTo(w.anchorX, w.anchorY);
+                            // Zigzag spring drawing
+                            let zigzags = 10;
+                            let dy = (w.y - w.anchorY) / zigzags;
+                            for(let z=0; z<zigzags; z++) {
+                                let offset = (z%2===0) ? 5 : -5;
+                                ctx.lineTo(w.anchorX + offset, w.anchorY + z*dy);
+                            }
+                            ctx.lineTo(w.x, w.y);
+                            
+                            // Visualizing Stiffness (Thick line = High Fisher Info)
+                            ctx.lineWidth = w.k * 30 + 1; 
+                            ctx.strokeStyle = app.colors.inkSoft;
+                            ctx.stroke();
+
+                            // Draw Anchor
+                            ctx.fillStyle = app.colors.ink;
+                            ctx.fillRect(w.anchorX-5, w.anchorY-5, 10, 10);
+
+                            // Draw Weight
+                            ctx.beginPath();
+                            ctx.arc(w.x, w.y, 8, 0, Math.PI*2);
+                            ctx.fillStyle = app.colors.paper;
+                            ctx.fill();
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = app.colors.ink;
+                            ctx.stroke();
+                        });
+
+                        app.springs.instance = requestAnimationFrame(loop);
+                    };
+                    loop();
+                },
+                applyForce() { this.mouseForce = 3; },
+                reset() { this.mouseForce = 0; }
+            },
+
+            // =========================================
+            // VIZ 4: HEBBIAN (Graph)
+            // =========================================
+            hebbian: {
+                init() {
+                    const { ctx, width, height } = app.setupCanvas('viz-hebbian', 300);
+                    
+                    // Simple Graph
+                    const layers = [3, 4, 3];
+                    const nodes = [];
+                    const edges = [];
+                    
+                    const layerGap = width / 4;
+                    const yGap = 50;
+
+                    // Build Nodes
+                    layers.forEach((count, lIdx) => {
+                        let startY = (height - (count-1)*yGap)/2;
+                        for(let i=0; i<count; i++) {
+                            nodes.push({
+                                x: layerGap * (lIdx+1),
+                                y: startY + i*yGap,
+                                layer: lIdx,
+                                active: 0
+                            });
+                        }
+                    });
+
+                    // Build Edges
+                    nodes.forEach(n1 => {
+                        nodes.forEach(n2 => {
+                            if(n2.layer === n1.layer + 1) {
+                                edges.push({ src: n1, dst: n2, w: 1, active: 0 });
+                            }
+                        });
+                    });
+
+                    const loop = () => {
+                        // Logic
+                        // Decay
+                        nodes.forEach(n => n.active *= 0.95);
+                        edges.forEach(e => {
+                            e.active *= 0.9;
+                            e.w = Math.max(0.5, e.w * 0.995); // Forgetting
+                        });
+
+                        // Fire
+                        if(Math.random() < 0.1) {
+                            let startNode = nodes.filter(n => n.layer === 0)[Math.floor(Math.random()*3)];
+                            startNode.active = 1;
+                            
+                            // Propagate
+                            let curr = startNode;
+                            for(let l=0; l<2; l++) {
+                                let nextEdges = edges.filter(e => e.src === curr);
+                                if(!nextEdges.length) break;
+                                // Pick weighted random path
+                                let chosen = nextEdges[Math.floor(Math.random() * nextEdges.length)];
+                                chosen.active = 1;
+                                chosen.w = Math.min(8, chosen.w + 1.5); // Hebbian Update
+                                curr = chosen.dst;
+                                curr.active = 1;
+                            }
+                        }
+
+                        // Render
+                        ctx.fillStyle = app.colors.paper;
+                        ctx.fillRect(0,0,width,height);
+
+                        edges.forEach(e => {
+                            ctx.beginPath();
+                            ctx.moveTo(e.src.x, e.src.y);
+                            ctx.lineTo(e.dst.x, e.dst.y);
+                            ctx.lineWidth = e.w;
+                            
+                            // Color: Black normally, Red when active
+                            let r = e.active * 214; 
+                            let g = e.active * 64;
+                            let b = e.active * 0;
+                            // Interpolate between Ink and Accent
+                            ctx.strokeStyle = `rgba(${r || 26}, ${g || 28}, ${b || 27}, ${0.1 + e.w/10})`;
+                            if(e.active > 0.1) ctx.strokeStyle = app.colors.accent;
+                            
+                            ctx.stroke();
+                        });
+
+                        nodes.forEach(n => {
+                            ctx.beginPath();
+                            ctx.arc(n.x, n.y, 4, 0, Math.PI*2);
+                            ctx.fillStyle = n.active > 0.1 ? app.colors.accent : app.colors.ink;
+                            ctx.fill();
+                        });
+
+                        requestAnimationFrame(loop);
+                    };
+                    loop();
+                }
+            }
+        };
+
+        // --- POPOVER INTERACTION ---
+        document.querySelectorAll('.citation').forEach(cit => {
+            const ref = cit.getAttribute('data-ref');
+            const content = document.getElementById(ref);
+            if(!content) return;
+
+            const pop = document.createElement('div');
+            pop.className = 'popover';
+            pop.innerHTML = content.innerHTML;
+            document.body.appendChild(pop);
+
+            cit.addEventListener('mouseenter', (e) => {
+                const rect = cit.getBoundingClientRect();
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                
+                pop.style.left = (rect.left + scrollLeft + rect.width/2) + 'px';
+                pop.style.top = (rect.bottom + scrollTop + 5) + 'px';
+                pop.classList.add('visible');
+            });
+            
+            cit.addEventListener('mouseleave', () => {
+                pop.classList.remove('visible');
+            });
+        });
+
+        // Initialize all
+        window.onload = () => {
+            app.drift.init();
+            app.manifold.init();
+            app.springs.init();
+            app.springs.applyForce(); // Start with force applied for demo
+            app.hebbian.init();
+        };
+
+    </script>
+</body>
+</html>

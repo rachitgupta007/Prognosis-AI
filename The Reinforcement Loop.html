@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Reinforcement Loop: DeepSeek-R1 & System 2 Reasoning | Rachit Gupta</title>
+    
+    <!-- FONTS: Newsreader (Serif) for prose, JetBrains Mono (Monospace) for code/data -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
+    
+    <!-- MATHJAX: For LaTeX rendering -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- PRISM: For Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        :root {
+            /* --- DESIGN TOKENS --- */
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+            --c-success: #2e7d32;
+            --c-error: #c62828;
+            
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 740px;
+            margin: 0 auto;
+            padding: 120px 24px 100px 24px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            color: var(--c-ink);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 3.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-family: var(--f-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--c-ink-soft);
+            margin-top: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p { margin-bottom: 1.5rem; font-weight: 400; }
+        
+        strong { font-weight: 650; color: var(--c-ink); }
+        
+        ul, ol { margin-bottom: 1.5rem; padding-left: 1.8rem; }
+        li { margin-bottom: 0.5rem; }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+        a:hover { border-bottom: 1px solid var(--c-accent); color: var(--c-accent); }
+
+        blockquote {
+            border-left: 3px solid var(--c-accent);
+            padding: 1rem 1rem 1rem 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            background: rgba(255,255,255,0.5);
+            color: var(--c-ink-soft);
+        }
+
+        /* --- CODE BLOCKS --- */
+        pre[class*="language-"] {
+            background: #1e1e1e !important;
+            border-radius: 4px;
+            margin: 2rem 0 !important;
+            font-size: 0.8rem !important;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        code { font-family: var(--f-mono) !important; }
+        
+        p code {
+            background: rgba(0,0,0,0.06);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            color: var(--c-accent);
+            font-family: var(--f-mono);
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid rgba(26, 28, 27, 0.08);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+        .logo { font-weight: 700; font-size: 1.1rem; font-family: var(--f-mono); letter-spacing: -0.03em; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; border: none; opacity: 0.6; }
+        .nav-links a:hover { opacity: 1; color: var(--c-accent); }
+        .nav-links a.active { opacity: 1; text-decoration: underline; }
+
+        /* --- METADATA --- */
+        .meta {
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            margin-bottom: 4rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--c-grid);
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* --- VISUALIZATION CONTAINER --- */
+        .viz-box {
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            border-radius: 2px;
+            padding: 20px;
+            margin: 3rem 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .viz-header {
+            font-family: var(--f-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--c-ink-soft);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .viz-controls button {
+            background: transparent;
+            border: 1px solid var(--c-grid);
+            color: var(--c-ink-soft);
+            padding: 4px 10px;
+            font-family: var(--f-mono);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .viz-controls button:hover { border-color: var(--c-ink); color: var(--c-ink); }
+        .viz-controls button.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+        
+        canvas { display: block; width: 100%; background: #faf9f6; }
+
+        /* --- TERMINAL VIZ --- */
+        .terminal {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            padding: 15px;
+            border-radius: 4px;
+            height: 350px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .cursor { display: inline-block; width: 8px; height: 14px; background: #d4d4d4; animation: blink 1s step-end infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 8rem;
+            padding-top: 3rem;
+            border-top: 1px solid var(--c-grid);
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            color: var(--c-ink-soft);
+            display: grid;
+            grid-template-columns: 1fr auto;
+        }
+
+        /* --- ANIMATION UTILS --- */
+        .animate-enter { animation: fadeInUp 1s var(--easing-sharp) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CITATION POPOVER --- */
+        .citation {
+            vertical-align: super; font-size: 0.7em; color: var(--c-accent);
+            cursor: pointer; position: relative; font-family: var(--f-mono);
+            margin-left: 2px;
+        }
+        .popover {
+            position: absolute; background: var(--c-ink); color: var(--c-paper);
+            padding: 12px; border-radius: 2px; width: 260px;
+            bottom: 25px; left: 50%; transform: translateX(-50%);
+            font-size: 0.75rem; font-family: var(--f-mono);
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+            z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .citation:hover .popover { opacity: 1; }
+        .popover::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px;
+            border-width: 5px; border-style: solid; border-color: var(--c-ink) transparent transparent transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RG.</div>
+        <div class="nav-links">
+            <a href="#">Articles</a>
+            <a href="#">Notes</a>
+            <a href="#" class="active">Simulations</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <header class="animate-enter">
+            <h1>The Reinforcement Loop: DeepSeek-R1 & System 2 Reasoning</h1>
+        </header>
+
+        <div class="meta animate-enter delay-1">
+            <span>By <strong>Rachit Gupta</strong></span>
+            <span>Nov 30, 2025</span>
+            <span>25 Min Read</span>
+        </div>
+
+        <article class="animate-enter delay-2">
+            <p>Hi everyone. We are back.</p>
+
+            <p>It has been a minute since we really popped the hood on what is happening at the bleeding edge of Large Language Model research. For the last five years, the "Recipe" for building state-of-the-art models has been remarkably stable. You take a massive Transformer architecture, you scrape a petabyte of text from the public internet, and you blast it with thousands of H100s for months to minimize the negative log-likelihood of the next token. This is the era of <strong>Pre-training Scaling Laws</strong>. The dogma was simple: if you want a smarter model, you build a bigger cluster.</p>
+
+            <p>But recently, the wind has shifted. If you have been reading the <strong>OpenAI o1 System Card</strong><span class="citation">1<span class="popover">OpenAI (2024). 'o1 System Card'. Safety and Capability evaluations of the first reasoning model.</span></span>, or digging into the fascinating open-weights release of <strong>DeepSeek-R1</strong><span class="citation">2<span class="popover">DeepSeek-AI (2025). 'DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning'.</span></span>, you might have noticed that we are standing at a phase transition. We are moving from models that <em>predict</em>, to models that <em>reason</em>. We are moving from a reflex to a reflection.</p>
+
+            <p>The core thesis I want to explore in this post is this: <strong>Intelligence is not just predicting the next token; it is exploring the solution space.</strong></p>
+
+            <p>We are going to dive deep into <strong>System 2 Reasoning</strong>. We will look at the math behind DeepSeek’s <strong>GRPO (Group Relative Policy Optimization)</strong>, we will discuss Noam Brown’s <strong>"Parable of the Google Search,"</strong><span class="citation">3<span class="popover">Brown, N. (2024). 'Parable of the Google Search'. Talks on Inference-Time Compute scaling.</span></span> and we will look at the new metric that matters: <strong>Seconds per Thought</strong>.</p>
+
+            <h3>1. The Cognitive Schism: System 1 vs. System 2</h3>
+
+            <p>To understand why DeepSeek-R1 and OpenAI o1 represent such a significant departure from GPT-4 class models, we must return to first principles of cognitive science. Nobel laureate Daniel Kahneman, in his seminal work <em>Thinking, Fast and Slow</em>, describes the human brain as operating via two distinct systems:</p>
+
+            <ul>
+                <li><strong>System 1 (Fast, Intuitive):</strong> This is your gut reaction. It is automatic, frequent, emotional, and subconscious. If I ask you <em>"What is 2+2?"</em>, you do not calculate; you simply <em>know</em> the answer is 4. It acts like a massive lookup table of learned correlations.</li>
+                <li><strong>System 2 (Slow, Deliberate):</strong> This is effortful, infrequent, and logical. If I ask you <em>"What is 17 × 24?"</em>, you cannot intuit the answer. You must load the numbers into working memory, apply an algorithm ($10 \times 24 = 240$, $7 \times 24 = 168$...), and sequentially process the result.</li>
+            </ul>
+
+            <p>Until recently, the Transformer architecture has been exclusively a <strong>System 1</strong> engine. Mathematically, a standard LLM models the conditional probability of the next token $x_{t+1}$ given the context $x_{0:t}$ via a single forward pass:</p>
+
+            $$ P(x_{t+1} | x_{0:t}) = \text{softmax}(W_U \cdot h_t) $$
+
+            <p>This creates a computational straitjacket. The model uses the exact same amount of compute (FLOPs) to answer "What is your name?" as it does to answer "Prove the Riemann Hypothesis." It is $O(1)$ per token. If a problem requires intermediate steps that were not present in the training data, the model attempts to "fake" the reasoning, often leading to hallucination. It creates the <em>appearance</em> of a solution without the <em>process</em> of solving.</p>
+
+            <!-- VISUALIZATION 1: ENTROPY -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span>Figure 1: Probability Collapse</span>
+                    <div class="viz-controls">
+                        <button id="btn-sys1" class="active" onclick="drawEntropy('sys1')">System 1 (Reflex)</button>
+                        <button id="btn-sys2" onclick="drawEntropy('sys2')">System 2 (Reasoning)</button>
+                    </div>
+                </div>
+                <canvas id="entropyCanvas" width="700" height="350"></canvas>
+                <p class="mono" style="margin-top: 15px; font-size: 0.75rem; color: var(--c-ink-soft);">
+                    <strong>Visualization:</strong> System 1 (Red) acts as a high-entropy reflex. The probability mass is spread out. System 2 (Green) uses reasoning time to constrain the search space, collapsing the probability density onto the correct answer.
+                </p>
+            </div>
+
+            <h3>2. DeepSeek-R1: The Reinforcement Loop</h3>
+
+            <p>How do we break this $O(1)$ barrier? We need to induce the model to engage in <strong>Chain of Thought (CoT)</strong> not just as a stylistic formatting choice, but as a latent search process.</p>
+
+            <p>DeepSeek-R1 (specifically the R1-Zero variant) achieved this through pure Reinforcement Learning, without the heavy reliance on human-annotated Supervised Fine-Tuning (SFT) that characterized previous efforts. DeepSeek researchers set up an RL environment where the model was rewarded solely for the correctness of the final answer. They did not tell the model <em>how</em> to think. They simply optimized for the outcome.</p>
+
+            <p>As the training progressed, a fascinating emergent behavior occurred. To maximize reward, the model learned to generate long internal monologues. It began to <strong>backtrack</strong>.</p>
+            
+            <p>It learned to say: <em>"Wait, that calculation doesn't seem right. Let me check the boundary condition again."</em></p>
+            
+            <p>This "backtracking" is the critical differentiator. It implies the model is performing a tree search over the solution space, pruning dead branches (incorrect logic) and expanding promising ones. The model discovered that <strong>spending more tokens thinking reduces the entropy of the final answer.</strong></p>
+
+            <!-- VISUALIZATION 2: TERMINAL STREAM -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span>Figure 2: The Inference Stream</span>
+                    <div class="viz-controls">
+                        <button onclick="startTerminal()" id="streamBtn">Simulate Thinking</button>
+                    </div>
+                </div>
+                <div id="terminal" class="terminal"></div>
+                <p class="mono" style="margin-top: 15px; font-size: 0.75rem; color: var(--c-ink-soft);">
+                    <strong>Visualization:</strong> A simulation of DeepSeek-R1's raw output. Notice the <code>&lt;think&gt;</code> tags. The model produces "thought tokens" that are hidden from the final user but essential for derivation. Watch for the <span style="color:#e74c3c">Self-Correction</span> event.
+                </p>
+            </div>
+
+            <h3>3. The Math: GRPO (Group Relative Policy Optimization)</h3>
+
+            <p>Training a 671B parameter model with Reinforcement Learning is notoriously unstable and computationally expensive. The standard algorithm, <strong>PPO (Proximal Policy Optimization)</strong>, requires maintaining a "Critic" model (Value Function) that is often as large as the "Actor" (Policy Model). This doubles the memory footprint. For a model the size of DeepSeek-V3, this would require an impossible amount of VRAM.</p>
+
+            <p>DeepSeek introduced <strong>GRPO</strong>, which eliminates the Critic entirely. Instead of learning a value function $V(s)$ to estimate the expected reward, GRPO uses the group statistics of multiple sampled outputs as the baseline.</p>
+
+            <p><strong>The Algorithm:</strong></p>
+            <ol>
+                <li>Take a prompt $q$.</li>
+                <li>Sample a group of $G$ outputs $\{o_1, o_2, \dots, o_G\}$ from the old policy $\pi_{\theta_{old}}$.</li>
+                <li>Calculate the reward $r_i$ for each output (e.g., +1 for correct, 0 for incorrect).</li>
+            </ol>
+            
+            <p>The <strong>Advantage</strong> $A_i$ for the $i$-th output is computed relative to the group:</p>
+
+            $$ A_i = \frac{r_i - \text{mean}(\{r_1, \dots, r_G\})}{\text{std}(\{r_1, \dots, r_G\}) + \epsilon} $$
+
+            <p>This effectively creates a tournament. If an output is better than the average of its siblings, it gets a positive signal. If worse, a negative signal. The objective function is:</p>
+
+            $$ \mathcal{J}_{GRPO}(\theta) = \mathbb{E} \left[ \frac{1}{G} \sum_{i=1}^G \left( \min \left( \frac{\pi_\theta(o_i|q)}{\pi_{\theta_{old}}(o_i|q)} A_i, \text{clip}(\dots) A_i \right) - \beta \mathbb{D}_{KL}(\pi_\theta || \pi_{ref}) \right) \right] $$
+
+            <p>Here is a simplified PyTorch implementation of the loss function:</p>
+
+<pre><code class="language-python">import torch
+import torch.nn.functional as F
+
+def grpo_loss(policy_probs, old_probs, rewards, ref_probs, beta=0.04):
+    """
+    Computes GRPO Loss without a Critic Network.
+    """
+    # 1. Compute Group Advantages
+    # rewards shape: [Batch, GroupSize]
+    mean_r = rewards.mean(dim=1, keepdim=True)
+    std_r = rewards.std(dim=1, keepdim=True)
+    advantages = (rewards - mean_r) / (std_r + 1e-8)
+    
+    # 2. Importance Sampling Ratio
+    # ratio = pi_theta / pi_old
+    ratio = torch.exp(torch.log(policy_probs) - torch.log(old_probs))
+    
+    # 3. PPO-style Clipping
+    surr1 = ratio * advantages.unsqueeze(-1)
+    surr2 = torch.clamp(ratio, 1-0.2, 1+0.2) * advantages.unsqueeze(-1)
+    
+    # 4. KL Penalty (drift prevention)
+    kl = torch.exp(ref_probs) * (torch.log(ref_probs) - torch.log(policy_probs))
+    
+    loss = -torch.min(surr1, surr2).mean() + beta * kl.mean()
+    return loss
+</code></pre>
+
+            <h3>4. Test-Time Compute: The New Scaling Law</h3>
+
+            <p>The implications of this shift are quantified by Noam Brown's <strong>"Parable of the Google Search."</strong></p>
+
+            <p>Imagine you want to find the best sushi restaurant in Tokyo.
+            <br><strong>Strategy A (System 1):</strong> You ask an LLM. It must output "Sushi Saito" immediately based on compressed weights.
+            <br><strong>Strategy B (System 2):</strong> You use a search engine. You open tabs, read reviews, check opening hours, and cross-reference prices. This takes time.</p>
+
+            <p>Strategy B utilizes <strong>Test-Time Compute</strong>. We are trading <em>latency</em> for <em>accuracy</em>. Brown posits that spending 10 seconds generating reasoning tokens at inference time can yield performance gains equivalent to scaling the model's parameters by 10x during training.</p>
+
+            <p>This changes the economics of AI. We are moving from "Tokens per Second" to <strong>"Seconds per Thought."</strong></p>
+
+            <!-- VISUALIZATION 3: TREE SEARCH -->
+            <div class="viz-box">
+                <div class="viz-header">
+                    <span>Figure 3: The Tree of Thoughts</span>
+                    <div class="viz-controls">
+                        <button onclick="resetTree()">Run Search</button>
+                    </div>
+                </div>
+                <canvas id="treeCanvas" width="700" height="400"></canvas>
+                <p class="mono" style="margin-top: 15px; font-size: 0.75rem; color: var(--c-ink-soft);">
+                    <strong>Visualization:</strong> A Monte Carlo Tree Search simulation. <span style="color:#c62828">Red</span> nodes represent dead ends where the model backtracks. <span style="color:#2e7d32">Green</span> nodes represent the "Golden Path" to the solution.
+                </p>
+            </div>
+
+            <h3>5. Conclusion</h3>
+
+            <p>We have been obsessed with latency. We wanted our chatbots to be snappy. We measured success in milliseconds.</p>
+
+            <p>But for high-value domains—drug discovery, mathematical proofs, complex software engineering—latency is secondary to correctness. The Reinforcement Loop demonstrated by DeepSeek-R1 and OpenAI o1 proves that models can learn to "think" without explicit human instruction. They can discover the scientific method inside their own weights, driven purely by the ruthless optimization of GRPO.</p>
+
+            <p>The scaling laws haven't broken. They have just moved to a new dimension. We are no longer limited by the size of the cluster we can train on; we are limited by the time we are willing to let the model think.</p>
+            
+            <p>Happy hacking.</p>
+
+        </article>
+
+        <footer>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <strong>Rachit Gupta</strong>
+                <span>Research Engineer & Writer</span>
+                <span>© 2025</span>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; gap:0.5rem; align-items: flex-end;">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="#">RSS</a>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC FOR VISUALIZATIONS -->
+    <script>
+        // --- 1. ENTROPY COLLAPSE VIZ ---
+        const entCanvas = document.getElementById('entropyCanvas');
+        const entCtx = entCanvas.getContext('2d');
+        let entAnim;
+
+        function drawEntropy(mode) {
+            // UI State
+            document.getElementById('btn-sys1').classList.remove('active');
+            document.getElementById('btn-sys2').classList.remove('active');
+            document.getElementById('btn-'+mode).classList.add('active');
+            
+            if(entAnim) cancelAnimationFrame(entAnim);
+            
+            let progress = 0;
+            const width = entCanvas.width;
+            const height = entCanvas.height;
+
+            function gaussian(x, mean, std) {
+                return (1 / (std * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / std, 2));
+            }
+
+            function loop() {
+                entCtx.clearRect(0,0,width,height);
+                entCtx.fillStyle = '#faf9f6'; // Match bg
+                entCtx.fillRect(0,0,width,height);
+
+                // Axis
+                entCtx.beginPath();
+                entCtx.moveTo(50, height - 50);
+                entCtx.lineTo(width - 50, height - 50);
+                entCtx.strokeStyle = '#D1CEC4';
+                entCtx.lineWidth = 2;
+                entCtx.stroke();
+
+                // Parameters
+                let mean = width / 2;
+                let std = (mode === 'sys1') ? 120 : 120 - (Math.pow(progress, 0.5) * 105); // 120 -> 15
+                let color = (mode === 'sys1') ? '#D64000' : '#2E7D32';
+                
+                // Animate progress
+                if(progress < 1) progress += 0.015;
+
+                // Draw Curve
+                entCtx.beginPath();
+                for(let i=0; i<width-100; i+=5) {
+                    let x = i + 50;
+                    let val = gaussian(x, mean, std);
+                    // Scale Y height
+                    let y = (height - 50) - (val * 8000); 
+                    if(i===0) entCtx.moveTo(x, y);
+                    else entCtx.lineTo(x, y);
+                }
+                
+                entCtx.strokeStyle = color;
+                entCtx.lineWidth = 3;
+                entCtx.stroke();
+                
+                // Fill
+                entCtx.lineTo(width-50, height-50);
+                entCtx.lineTo(50, height-50);
+                entCtx.fillStyle = color + '22'; // low opacity hex
+                entCtx.fill();
+
+                // Labels
+                entCtx.fillStyle = '#1A1C1B';
+                entCtx.font = "14px JetBrains Mono";
+                entCtx.textAlign = "center";
+                entCtx.fillText("Solution Space", width/2, height - 20);
+                
+                if(mode === 'sys2' && progress > 0.8) {
+                    entCtx.fillText("Correct Answer", width/2, 50);
+                    entCtx.beginPath();
+                    entCtx.moveTo(width/2, 60);
+                    entCtx.lineTo(width/2, height-60);
+                    entCtx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    entCtx.setLineDash([5, 5]);
+                    entCtx.stroke();
+                    entCtx.setLineDash([]);
+                }
+
+                if(progress < 1) entAnim = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+        
+        // --- 2. TERMINAL STREAM VIZ ---
+        const termContent = [
+            {t: "User: Solve for x: log2(x) + log2(x-2) = 3\n", c: "#fff"},
+            {t: "<think>\n", c: "#569CD6"},
+            {t: "Step 1: Apply product rule log(a)+log(b)=log(ab).\n", c: "#d4d4d4"},
+            {t: "   -> log2(x(x-2)) = 3\n", c: "#d4d4d4"},
+            {t: "Step 2: Exponentiate both sides.\n", c: "#d4d4d4"},
+            {t: "   -> x(x-2) = 2^3 = 6\n", c: "#d4d4d4"},
+            {t: "   -> x^2 - 2x - 6 = 0\n", c: "#d4d4d4"},
+            {t: "   Wait. 2^3 is 8, not 6. Calculation error.\n", c: "#e74c3c"}, // Red
+            {t: "*** SELF-CORRECTION TRIGGERED ***\n", c: "#D64000"}, // Accent
+            {t: "   Backtracking to Step 2.\n", c: "#d4d4d4"},
+            {t: "   -> x(x-2) = 8\n", c: "#d4d4d4"},
+            {t: "   -> x^2 - 2x - 8 = 0\n", c: "#d4d4d4"},
+            {t: "Step 3: Solve quadratic.\n", c: "#d4d4d4"},
+            {t: "   -> (x-4)(x+2) = 0\n", c: "#d4d4d4"},
+            {t: "   Roots: x=4, x=-2.\n", c: "#d4d4d4"},
+            {t: "Step 4: Check domain. x > 0 required.\n", c: "#d4d4d4"},
+            {t: "   x=-2 rejected. x=4 accepted.\n", c: "#2e7d32"}, // Green
+            {t: "</think>\n", c: "#569CD6"},
+            {t: "Final Answer: x = 4", c: "#fff", b: true}
+        ];
+
+        async function startTerminal() {
+            const term = document.getElementById('terminal');
+            const btn = document.getElementById('streamBtn');
+            btn.disabled = true;
+            term.innerHTML = '<span class="cursor"></span>';
+            const cursor = term.querySelector('.cursor');
+            
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+            for (let line of termContent) {
+                let span = document.createElement('span');
+                span.style.color = line.c;
+                if(line.b) span.style.fontWeight = "bold";
+                
+                term.insertBefore(span, cursor);
+
+                for (let char of line.t) {
+                    span.textContent += char;
+                    term.scrollTop = term.scrollHeight;
+                    await sleep(Math.random() * 20 + 5);
+                }
+                
+                // Pause on error or think
+                if (line.c === "#e74c3c") await sleep(800);
+                else await sleep(100);
+            }
+            btn.disabled = false;
+        }
+
+        // --- 3. TREE SEARCH VIZ ---
+        const treeCanvas = document.getElementById('treeCanvas');
+        const treeCtx = treeCanvas.getContext('2d');
+        let treeNodes = [];
+        let treeAnimFrame;
+
+        function resetTree() {
+            if(treeAnimFrame) cancelAnimationFrame(treeAnimFrame);
+            treeNodes = [{x: 350, y: 40, level: 0, status: 'active', parent: null}];
+            runTreeAnim();
+        }
+
+        function runTreeAnim() {
+            let frame = 0;
+            
+            function loop() {
+                treeCtx.clearRect(0,0,700,400);
+                treeCtx.fillStyle = '#faf9f6';
+                treeCtx.fillRect(0,0,700,400);
+
+                // Add nodes logic
+                if (frame % 40 === 0 && frame < 300) {
+                    let active = treeNodes.filter(n => n.status === 'active' && n.level < 5);
+                    if (active.length > 0) {
+                        let parent = active[Math.floor(Math.random() * active.length)];
+                        // Branch
+                        let branches = 2;
+                        for(let i=0; i<branches; i++) {
+                            let spread = 200 / (parent.level + 1);
+                            let off = (i === 0 ? -1 : 1) * spread + (Math.random()*20 - 10);
+                            let stat = (Math.random() > 0.6) ? 'dead' : 'active';
+                            if (parent.level > 3 && stat === 'active') stat = 'solution';
+                            
+                            treeNodes.push({
+                                x: parent.x + off,
+                                y: parent.y + 60,
+                                level: parent.level + 1,
+                                status: stat,
+                                parent: parent
+                            });
+                        }
+                        if(Math.random() > 0.3) parent.status = 'processed';
+                    }
+                }
+
+                // Draw Connections
+                treeCtx.lineWidth = 1.5;
+                treeNodes.forEach(n => {
+                    if (n.parent) {
+                        treeCtx.beginPath();
+                        treeCtx.moveTo(n.parent.x, n.parent.y);
+                        treeCtx.lineTo(n.x, n.y);
+                        treeCtx.strokeStyle = '#D1CEC4';
+                        treeCtx.stroke();
+                    }
+                });
+
+                // Draw Nodes
+                treeNodes.forEach(n => {
+                    treeCtx.beginPath();
+                    treeCtx.arc(n.x, n.y, 6, 0, Math.PI*2);
+                    if (n.status === 'dead') treeCtx.fillStyle = '#c62828';
+                    else if (n.status === 'solution') treeCtx.fillStyle = '#2e7d32';
+                    else treeCtx.fillStyle = '#1A1C1B';
+                    treeCtx.fill();
+                    
+                    // Halo for solution
+                    if (n.status === 'solution') {
+                        treeCtx.beginPath();
+                        treeCtx.arc(n.x, n.y, 10 + Math.sin(frame*0.1)*3, 0, Math.PI*2);
+                        treeCtx.strokeStyle = 'rgba(46, 125, 50, 0.4)';
+                        treeCtx.stroke();
+                    }
+                });
+
+                frame++;
+                treeAnimFrame = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // Init on Load
+        window.onload = function() {
+            drawEntropy('sys1');
+            resetTree();
+        }
+
+    </script>
+</body>
+</html>

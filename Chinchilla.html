@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chinchilla Equation: A Deep Dive | Rachit Gupta</title>
+    
+    <!-- 1. TYPOGRAPHY -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+
+    <!-- 2. MATHJAX -->
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: { fontCache: 'global' }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- 3. PLOTLY -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <style>
+        /* --- DESIGN SYSTEM: PAPER & INK --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;
+            --c-grid: #D1CEC4;
+            --c-highlight: rgba(214, 64, 0, 0.05);
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 19px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- LAYOUT --- */
+        .layout-narrow {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 140px 24px 100px 24px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 3.2rem;
+            line-height: 1.1;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-top: 4rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 0.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        p { margin-bottom: 1.5rem; text-align: justify; }
+
+        .mono { font-family: var(--f-mono); font-size: 0.85em; }
+        .caps { text-transform: uppercase; letter-spacing: 0.05em; }
+
+        blockquote {
+            background: var(--c-highlight);
+            border-left: 3px solid var(--c-accent);
+            padding: 1.5rem 2rem;
+            font-style: italic;
+            margin: 2.5rem 0;
+            color: var(--c-ink-soft);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+        a:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .logo { font-family: var(--f-mono); font-weight: 700; font-size: 1.2rem; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a {
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--c-ink-soft);
+        }
+        .nav-links a:hover { color: var(--c-accent); }
+
+        /* --- META BLOCK --- */
+        .meta-block {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid var(--c-grid);
+            border-bottom: 1px solid var(--c-grid);
+            padding: 1.5rem 0;
+            margin-bottom: 4rem;
+            font-family: var(--f-mono);
+            font-size: 0.85rem;
+        }
+        .meta-item label { display: block; color: var(--c-ink-soft); font-size: 0.7em; text-transform: uppercase; margin-bottom: 4px; }
+        .meta-item span { font-weight: 600; color: var(--c-ink); }
+
+        /* --- VIZ CONTAINERS --- */
+        .viz-wrapper {
+            margin: 4rem -3rem;
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            padding: 2rem;
+            border-radius: 2px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+        }
+        .viz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px dotted var(--c-grid);
+            padding-bottom: 0.5rem;
+        }
+        .viz-title { font-family: var(--f-mono); font-weight: 600; color: var(--c-accent); }
+        .viz-fig { font-family: var(--f-mono); color: var(--c-ink-soft); font-size: 0.8rem; }
+
+        .viz-canvas {
+            width: 100%;
+            height: 500px;
+            background: #fff;
+        }
+
+        .viz-caption {
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            color: var(--c-ink-soft);
+            margin-top: 1.5rem;
+            background: #FAFAFA;
+            padding: 1rem;
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        /* --- CONTROLS --- */
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.02);
+            border: 1px solid var(--c-grid);
+        }
+        .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        label { font-family: var(--f-mono); font-size: 0.75rem; text-transform: uppercase; display: flex; justify-content: space-between; }
+        input[type=range] { width: 100%; accent-color: var(--c-accent); cursor: pointer; height: 2px; background: var(--c-grid); }
+        .val-display { color: var(--c-accent); font-weight: 700; }
+
+        /* --- FOOTER --- */
+        footer { margin-top: 6rem; border-top: 1px solid var(--c-grid); padding: 3rem 0; display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 0.85rem; color: var(--c-ink-soft); }
+
+        /* --- ANIMATION --- */
+        .fade-in { animation: fadeIn 0.8s var(--easing-sharp) forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        @media (max-width: 900px) {
+            .layout-narrow { padding: 100px 20px; }
+            .viz-wrapper { margin: 3rem 0; padding: 1rem; }
+            .control-panel { grid-template-columns: 1fr; }
+            h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">RG.</div>
+        <div class="nav-links">
+            <a href="#">Essays</a>
+            <a href="#">Research</a>
+            <a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="layout-narrow fade-in">
+        
+        <div class="mono caps" style="color: var(--c-accent); margin-bottom: 1rem;">Deep Learning / Scaling Laws</div>
+        <h1>The Chinchilla Equation: Training Data & Compute Optimality</h1>
+
+        <div class="meta-block">
+            <div class="meta-item"><label>Author</label><span>Rachit Gupta</span></div>
+            <div class="meta-item"><label>Date</label><span>November 30, 2025</span></div>
+            <div class="meta-item"><label>Read Time</label><span>~22 Minutes</span></div>
+        </div>
+
+        <article>
+            <p>
+                There is a specific kind of hubris that often precedes a paradigm shift in science. In the history of thermodynamics, before we fully understood entropy, engineers tried to make steam engines faster simply by building bigger boilers. If the train didn't move fast enough, the solution was crude: add more coal, build a larger firebox. It worked, linearly, until the materials failed or the fuel costs became astronomical.
+            </p>
+            <p>
+                Until very recently, the field of Large Language Models (LLMs) was in its "bigger boiler" era.
+            </p>
+            <p>
+                If you were tracking the trajectory of NLP research around 2020—the era of <strong>GPT-3</strong>—the prevailing intuition was dominated by a single variable: <strong>Parameter Count ($N$)</strong>. The scaling laws proposed by Kaplan et al. at OpenAI suggested that model performance scaled significantly better with size than with data. We treated parameters like gold and training tokens like a cheap commodity. We built monsters like <strong>Gopher</strong> (280B), <strong>MT-NLG</strong> (530B), and <strong>PaLM</strong> (540B).
+            </p>
+            <p>
+                We were building Ferrari engines and fueling them with AA batteries.
+            </p>
+            <p>
+                The correction arrived in 2022 with DeepMind's publication of <em>"Training Compute-Optimal Large Language Models"</em>, colloquially known as the <strong>Chinchilla Paper</strong>. It fundamentally rewrote the physics of AI scaling. It proved that the industry had been severely <strong>undertraining</strong> models—building giant brains that were effectively empty because they hadn't read enough books.
+            </p>
+
+            <h2>I. The Parametric Loss Function</h2>
+            <p>
+                To understand Chinchilla, we must first define the optimization objective. We are minimizing the <strong>Negative Log-Likelihood (Loss)</strong>. DeepMind modeled this loss ($L$) as a function of two finite resources: Model Size ($N$) and Dataset Size ($D$).
+            </p>
+            <div style="background: #fff; border: 1px solid var(--c-grid); padding: 2rem; text-align: center; margin: 2rem 0;">
+                $$ L(N, D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta} $$
+            </div>
+            <p>
+                This equation decomposes error into three distinct terms:
+            </p>
+            <ul>
+                <li><strong>$E$ (Irreducible Entropy):</strong> The noise floor of natural language. Even a god-like AI cannot predict the next token of a truly random sequence. ($E \approx 1.69$).</li>
+                <li><strong>$\frac{A}{N^\alpha}$ (Variance Error):</strong> The error caused by having a <strong>finite brain</strong>. As $N \to \infty$, this error vanishes.</li>
+                <li><strong>$\frac{B}{D^\beta}$ (Estimation Error):</strong> The error caused by having <strong>finite experience</strong>. As $D \to \infty$, this error vanishes.</li>
+            </ul>
+            <p>
+                <strong>The Revelation:</strong> DeepMind's massive experimental sweep found that $\alpha \approx 0.34$ and $\beta \approx 0.28$. The similarity of these exponents ($\alpha \approx \beta$) implies a fundamental symmetry: <strong>Parameters and Data are equally important.</strong>
+            </p>
+
+            <!-- VIZ 1: ISOFLOP -->
+            <div class="viz-wrapper">
+                <div class="viz-header">
+                    <span class="viz-title">FIGURE 01</span>
+                    <span class="viz-fig mono">Iso-FLOP Curves</span>
+                </div>
+                <div id="viz-isoflop" class="viz-canvas"></div>
+                <div class="viz-caption">
+                    <strong>Analysis:</strong> Each curve represents a fixed Compute Budget. The "Valley" (marked by stars) is the optimal configuration. Models to the left are "Undertrained" (too big, not enough data). Models to the right are "Overtrained" (too small, too much data).
+                </div>
+            </div>
+
+            <h2>II. Deriving the Golden Ratio</h2>
+            <p>
+                We assume a compute budget constraint $C \approx 6ND$ (FLOPs). Using the method of <strong>Lagrange Multipliers</strong> to minimize $L(N, D)$ subject to this constraint, we construct the Lagrangian:
+            </p>
+            $$ \mathcal{L}(N, D, \lambda) = E + AN^{-\alpha} + BD^{-\beta} - \lambda(6ND - C) $$
+            <p>
+                Setting the partial derivatives with respect to $N$ and $D$ to zero allows us to solve for the optimal allocation. Because the exponents $\alpha$ and $\beta$ are nearly identical, the relationship simplifies to a linear proportionality.
+            </p>
+            <p>
+                Plugging in the empirical constants, we arrive at the ratio that changed the industry:
+            </p>
+            <div style="text-align: center; font-size: 1.4rem; color: var(--c-accent); font-weight: bold; margin: 2rem 0; font-family: var(--f-serif);">
+                $$ D_{opt} \approx 20 \cdot N_{opt} $$
+            </div>
+            <p>
+                For every parameter in your network, you need roughly 20 tokens of training data. GPT-3 (175B parameters) was trained on 300B tokens. By this law, it should have been trained on <strong>3.5 Trillion</strong> tokens.
+            </p>
+
+            <h2>III. The Llama Deviation: Inference Optimality</h2>
+            <p>
+                If Chinchilla is the law, why did Meta's <strong>Llama 3 (8B)</strong> violate it? Llama 3 was trained on 15 Trillion tokens—a ratio of nearly <strong>1,900:1</strong>.
+            </p>
+            <p>
+                The answer lies in economics. Chinchilla optimizes for <strong>Training Efficiency</strong> (getting the best model for the cheapest training run). But models are not just trained; they are deployed.
+            </p>
+            <p>
+                <strong>Inference Cost</strong> depends almost entirely on Model Size ($N$). A smaller model is cheaper to run, faster to query, and fits on consumer hardware. Therefore, if you anticipate high usage volume, you should <strong>"Over-Train"</strong> a small model. You pay a massive upfront cost in compute (training on 15T tokens) to buy a cheaper marginal cost for the rest of the model's life.
+            </p>
+
+            <!-- VIZ 2: TCO SIMULATOR -->
+            <div class="viz-wrapper">
+                <div class="viz-header">
+                    <span class="viz-title">FIGURE 02</span>
+                    <span class="viz-fig mono">Inference Economics Simulator</span>
+                </div>
+                
+                <div id="viz-tco" class="viz-canvas"></div>
+                
+                <div class="control-panel">
+                    <div class="control-group" style="grid-column: span 2;">
+                        <label>
+                            <span>Inference Demand (Billions of Tokens)</span>
+                            <span id="tco-val" class="val-display">1 Billion</span>
+                        </label>
+                        <input type="range" id="tco-slider" min="0" max="200" step="5" value="1">
+                        <div class="mono" style="font-size: 0.75rem; color: var(--c-ink-soft); margin-top: 5px;">
+                            Drag to increase user demand (queries).
+                        </div>
+                    </div>
+                </div>
+
+                <div class="viz-caption">
+                    <strong>The Insight:</strong> This chart calculates the Total Cost to achieve a <em>fixed performance level</em> (Loss = 2.2). <br><br>
+                    As you increase <strong>Inference Demand</strong> (slide right), the "Total Cost" curve (Red) shifts its minimum to the left. This proves that at high volumes, smaller models (like Llama 3) become economically superior to Chinchilla-optimal models.
+                </div>
+            </div>
+
+            <h2>IV. The Wildcard: The Data Wall</h2>
+            <p>
+                The shift to Inference Optimality implies an insatiable hunger for tokens. If we want small, smart models, we need exponentially more data.
+            </p>
+            <p>
+                <strong>Epoch AI</strong> estimates that the total stock of high-quality human text on the public internet is roughly <strong>10 Trillion to 30 Trillion tokens</strong>. Llama 3 has already consumed 15 Trillion. We are halfway through the internet.
+            </p>
+            <p>
+                If we hit the "Data Wall", the scaling laws turn against us. If $D$ is capped, we can no longer reduce loss by simply training longer. We would be forced to return to increasing $N$ (making models bigger), which destroys our inference economics.
+            </p>
+
+            <!-- VIZ 3: 3D SURFACE -->
+            <div class="viz-wrapper">
+                <div class="viz-header">
+                    <span class="viz-title">FIGURE 03</span>
+                    <span class="viz-fig mono">The Loss Landscape</span>
+                </div>
+                
+                <div id="viz-3d" class="viz-canvas" style="height: 600px;"></div>
+
+                <div class="control-panel">
+                    <div class="control-group">
+                        <label>
+                            <span>Model Size ($N$)</span>
+                            <span id="n-val" class="val-display">8B</span>
+                        </label>
+                        <input type="range" id="n-slider" min="9" max="11.5" step="0.05" value="9.9">
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            <span>Dataset Size ($D$)</span>
+                            <span id="d-val" class="val-display">15T</span>
+                        </label>
+                        <input type="range" id="d-slider" min="10" max="13.5" step="0.05" value="13.17">
+                    </div>
+                    <div style="grid-column: span 2; text-align: center; margin-top: 10px;">
+                        <span class="mono">Calculated Loss: <span id="l-val" style="background:var(--c-ink); color:white; padding:4px 8px; border-radius:4px;">...</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Conclusion</h2>
+            <p>
+                The Chinchilla Equation ($N \approx D/20$) provided the first rigorous roadmap for efficient AI scaling, moving us away from the "bigger is better" dogma. However, economic realities are now pushing us beyond Chinchilla into the realm of extreme data saturation.
+            </p>
+            <p>
+                The next bottleneck isn't GPU FLOPs; it's the tokens themselves. The race is no longer just for H100s—it's for the last remaining scraps of high-quality human text on the internet.
+            </p>
+        </article>
+
+        <footer>
+            <div class="logo">RG.</div>
+            <div>
+                &copy; 2025 Rachit Gupta.<br>
+            </div>
+            <div>
+                <a href="#" style="color:inherit; text-decoration:none; margin-left:1rem;">Twitter</a>
+                <a href="#" style="color:inherit; text-decoration:none; margin-left:1rem;">GitHub</a>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Ensure the DOM is ready before Plotly attempts to render
+        window.addEventListener('load', function() {
+            
+            // --- CONSTANTS (DeepMind) ---
+            const E_const = 1.69;
+            const A_const = 406.4;
+            const B_const = 410.7;
+            const alpha = 0.34;
+            const beta = 0.28;
+
+            const COLORS = {
+                ink: '#1A1C1B',
+                accent: '#D64000',
+                grid: '#D1CEC4',
+                soft: '#4A4D4B'
+            };
+
+            const FONT_CFG = { family: 'JetBrains Mono, monospace', size: 12, color: COLORS.soft };
+
+            // Helper: Loss Function
+            function calcLoss(N, D) {
+                return E_const + (A_const / Math.pow(N, alpha)) + (B_const / Math.pow(D, beta));
+            }
+
+            // --- VIZ 1: ISO-FLOP CURVES ---
+            function renderIsoFlop() {
+                const budgets = [1e20, 1e21, 1e22, 1e23];
+                const budgetLabels = ["10²⁰", "10²¹", "10²²", "10²³"];
+                const lineColors = ['#bdc3c7', '#95a5a6', '#7f8c8d', COLORS.accent];
+                
+                let traces = [];
+
+                budgets.forEach((C, idx) => {
+                    let x = [], y = [];
+                    let minLoss = Infinity, optN = 0;
+
+                    for (let i = 0; i <= 100; i++) {
+                        const logN = 8 + (i/100) * 3.5; 
+                        const N = Math.pow(10, logN);
+                        const D = C / (6 * N); 
+                        
+                        const L = calcLoss(N, D);
+                        x.push(N);
+                        y.push(L);
+
+                        if(L < minLoss) { minLoss = L; optN = N; }
+                    }
+
+                    traces.push({
+                        x: x, y: y, mode: 'lines',
+                        name: `FLOPs: ${budgetLabels[idx]}`,
+                        line: { color: lineColors[idx], width: idx === 3 ? 3 : 2 }
+                    });
+
+                    traces.push({
+                        x: [optN], y: [minLoss], mode: 'markers',
+                        marker: { symbol: 'star', size: 12, color: lineColors[idx] },
+                        showlegend: false,
+                        hoverinfo: 'text',
+                        text: `Optimal N: ${(optN/1e9).toFixed(1)}B`
+                    });
+                });
+
+                const layout = {
+                    margin: { t: 20, b: 50, l: 60, r: 20 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    xaxis: { type: 'log', title: 'Model Size (Parameters)', gridcolor: COLORS.grid, tickfont: FONT_CFG, titlefont: FONT_CFG },
+                    yaxis: { title: 'Loss (NLL)', gridcolor: COLORS.grid, tickfont: FONT_CFG, titlefont: FONT_CFG },
+                    showlegend: true,
+                    legend: { x: 0.05, y: 0.05, bgcolor: 'rgba(255,255,255,0.8)' }
+                };
+
+                Plotly.newPlot('viz-isoflop', traces, layout, {displayModeBar: false, responsive: true});
+            }
+
+
+            // --- VIZ 2: INFERENCE SIMULATOR (FIXED) ---
+            function renderTCO() {
+                const slider = document.getElementById('tco-slider');
+                const label = document.getElementById('tco-val');
+                if(!slider) return;
+
+                function updatePlot() {
+                    const volumeBillions = parseFloat(slider.value);
+                    label.innerText = volumeBillions + " Billion Tokens";
+                    
+                    const volume = volumeBillions * 1e9; 
+                    
+                    // CRITICAL FIX: Target Loss is set to 2.2.
+                    // Previous version used 2.0, but small models (1B) have a loss floor > 2.0.
+                    // This caused "remainder" to be negative, Math.pow returned NaN, and the chart broke.
+                    const targetLoss = 2.2; 
+                    
+                    let x_N = [], y_Train = [], y_Inf = [], y_Total = [];
+                    
+                    for(let i=0; i<=100; i++) {
+                        const logN = 9 + (i/100) * 2; // 1B to 100B
+                        const N = Math.pow(10, logN);
+
+                        // Solve for D:  Loss = E + A/N^a + B/D^b  =>  D = (B / (Loss - E - A/N^a))^(1/b)
+                        const termN = A_const / Math.pow(N, alpha);
+                        const remainder = targetLoss - E_const - termN;
+
+                        // Only calculate valid points where target loss is achievable
+                        if (remainder > 0) {
+                            const requiredD = Math.pow(B_const / remainder, 1/beta);
+
+                            // Normalize costs (divide by 1e21)
+                            const cTrain = (6 * N * requiredD) / 1e21; 
+                            const cInf = (2 * N * volume) / 1e21; 
+                            const cTotal = cTrain + cInf;
+
+                            x_N.push(N);
+                            y_Train.push(cTrain);
+                            y_Inf.push(cInf);
+                            y_Total.push(cTotal);
+                        }
+                    }
+
+                    // Find min
+                    let minCost = Math.min(...y_Total);
+                    let minN = x_N[y_Total.indexOf(minCost)];
+
+                    const traces = [
+                        { x: x_N, y: y_Train, name: 'Training Cost', line: { color: '#bdc3c7', dash: 'dot', width: 2 } },
+                        { x: x_N, y: y_Inf, name: 'Inference Cost', line: { color: '#95a5a6', dash: 'dash', width: 2 } },
+                        { x: x_N, y: y_Total, name: 'Total Cost', line: { color: COLORS.accent, width: 4 } }
+                    ];
+
+                    const layout = {
+                        margin: { t: 30, b: 50, l: 60, r: 20 },
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        xaxis: { type: 'log', title: 'Model Size (Parameters)', gridcolor: COLORS.grid, tickfont: FONT_CFG, titlefont: FONT_CFG },
+                        yaxis: { title: 'Relative Cost', gridcolor: COLORS.grid, tickfont: FONT_CFG, titlefont: FONT_CFG },
+                        showlegend: true,
+                        legend: { x: 0.05, y: 1, bgcolor:'rgba(255,255,255,0.9)' },
+                        annotations: [{
+                            x: Math.log10(minN), y: minCost,
+                            text: "Optimal Point",
+                            showarrow: true, arrowhead: 2, ax: 0, ay: -40,
+                            font: { color: COLORS.accent, family: 'JetBrains Mono', weight: 'bold' }
+                        }]
+                    };
+
+                    Plotly.react('viz-tco', traces, layout, {displayModeBar: false, responsive: true});
+                }
+
+                // Explicit initialization to ensure chart appears immediately
+                Plotly.newPlot('viz-tco', [], {}, {displayModeBar: false}); 
+                slider.addEventListener('input', updatePlot);
+                setTimeout(updatePlot, 50);
+            }
+
+
+            // --- VIZ 3: 3D SURFACE ---
+            function render3D() {
+                let x = [], y = [], z = [];
+                for(let i=0; i<30; i++) x.push(9 + (i/29)*2.5); 
+                for(let i=0; i<30; i++) y.push(10 + (i/29)*3.5); 
+
+                for(let j=0; j<y.length; j++) {
+                    let zRow = [];
+                    for(let i=0; i<x.length; i++) {
+                        const N = Math.pow(10, x[i]);
+                        const D = Math.pow(10, y[j]);
+                        zRow.push(calcLoss(N, D));
+                    }
+                    z.push(zRow);
+                }
+
+                const surfaceTrace = {
+                    z: z, x: x, y: y, type: 'surface',
+                    colorscale: 'Blues', reversescale: true,
+                    opacity: 0.9, showscale: false
+                };
+
+                const layout = {
+                    margin: { t: 0, b: 0, l: 0, r: 0 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    scene: {
+                        xaxis: { title: 'Log Params', titlefont: FONT_CFG },
+                        yaxis: { title: 'Log Tokens', titlefont: FONT_CFG },
+                        zaxis: { title: 'Loss', titlefont: FONT_CFG },
+                        camera: { eye: { x: 1.5, y: 1.5, z: 1.2 } }
+                    }
+                };
+
+                const markerTrace = {
+                    x: [9.9], y: [13.17], z: [calcLoss(8e9, 15e12)],
+                    mode: 'markers', type: 'scatter3d',
+                    marker: { size: 8, color: COLORS.accent, symbol: 'diamond' },
+                    name: 'Config'
+                };
+
+                Plotly.newPlot('viz-3d', [surfaceTrace, markerTrace], layout, {displayModeBar: false, responsive: true});
+
+                // Updates
+                const nSlider = document.getElementById('n-slider');
+                const dSlider = document.getElementById('d-slider');
+                const nVal = document.getElementById('n-val');
+                const dVal = document.getElementById('d-val');
+                const lVal = document.getElementById('l-val');
+
+                function updateMarker() {
+                    const ln = parseFloat(nSlider.value);
+                    const ld = parseFloat(dSlider.value);
+                    const N = Math.pow(10, ln);
+                    const D = Math.pow(10, ld);
+                    const L = calcLoss(N, D);
+
+                    nVal.innerText = (N/1e9).toFixed(1) + "B";
+                    dVal.innerText = (D/1e12).toFixed(1) + "T";
+                    lVal.innerText = L.toFixed(4);
+
+                    Plotly.restyle('viz-3d', { x: [[ln]], y: [[ld]], z: [[L]] }, 1);
+                }
+
+                nSlider.addEventListener('input', updateMarker);
+                dSlider.addEventListener('input', updateMarker);
+                updateMarker(); 
+            }
+
+            // Execute All
+            renderIsoFlop();
+            renderTCO();
+            render3D();
+
+            // Resize Handler
+            window.addEventListener('resize', () => {
+                Plotly.Plots.resize('viz-isoflop');
+                Plotly.Plots.resize('viz-tco');
+                Plotly.Plots.resize('viz-3d');
+            });
+        });
+    </script>
+</body>
+</html>

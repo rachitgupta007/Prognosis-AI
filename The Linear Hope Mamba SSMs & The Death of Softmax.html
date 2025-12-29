@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Linear Hope: Mamba, SSMs & The Death of Softmax | Rachit Gupta</title>
+    
+    <!-- FONTS: Newsreader (Serif) & JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+    
+    <!-- MATHJAX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- PRISM SYNTAX HIGHLIGHTING -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" rel="stylesheet" />
+
+    <style>
+        /* --- DESIGN SYSTEM: PAPER & INK --- */
+        :root {
+            --c-paper: #F2F0E6;
+            --c-ink: #1A1C1B;
+            --c-ink-soft: #4A4D4B;
+            --c-accent: #D64000;  /* International Orange */
+            --c-teal: #2A9D8F;    /* Mamba Teal */
+            --c-grid: #D1CEC4;
+
+            --f-serif: 'Newsreader', serif;
+            --f-mono: 'JetBrains Mono', monospace;
+
+            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            background-color: var(--c-paper);
+            color: var(--c-ink);
+            font-family: var(--f-serif);
+            font-size: 20px;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- LAYOUT --- */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 140px 24px 80px 24px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3, h4 {
+            color: var(--c-ink);
+            margin-top: 2.5em;
+            margin-bottom: 0.8em;
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            letter-spacing: -0.04em;
+            font-variation-settings: "wght" 750;
+        }
+
+        h2 {
+            font-size: 2rem;
+            border-bottom: 1px solid var(--c-grid);
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            font-family: var(--f-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--c-accent);
+            margin-top: 3rem;
+        }
+
+        p { margin-bottom: 1.6em; text-align: justify; }
+
+        strong { font-weight: 750; color: #000; }
+        em { color: var(--c-ink-soft); font-style: italic; }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid var(--c-grid);
+            transition: border-color 0.2s;
+        }
+        a:hover { border-bottom-color: var(--c-accent); color: var(--c-accent); }
+
+        ul, ol { margin-bottom: 2em; padding-left: 1.5em; }
+        li { margin-bottom: 0.5em; }
+
+        /* --- CODE & MATH --- */
+        pre {
+            background-color: #FAFAF9 !important;
+            border: 1px solid var(--c-grid);
+            border-radius: 4px;
+            padding: 1.5rem !important;
+            margin: 2.5rem 0;
+            font-size: 0.85rem !important;
+            font-family: var(--f-mono) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            overflow-x: auto;
+        }
+        code { font-family: var(--f-mono) !important; color: var(--c-accent); font-size: 0.9em; }
+
+        .math-block {
+            overflow-x: auto;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        /* --- VISUALIZATIONS --- */
+        .viz-wrapper {
+            background: #fff;
+            border: 1px solid var(--c-grid);
+            border-radius: 6px;
+            padding: 2rem;
+            margin: 3rem -2rem; /* Breakout layout */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .viz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--c-grid);
+            flex-wrap: wrap;
+        }
+
+        .viz-btn {
+            background: transparent;
+            border: 1px solid var(--c-grid);
+            padding: 8px 16px;
+            font-family: var(--f-mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--c-ink-soft);
+            transition: all 0.2s;
+            text-transform: uppercase;
+            border-radius: 4px;
+        }
+        .viz-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
+        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); border-color: var(--c-ink); }
+
+        .viz-caption {
+            font-family: var(--f-mono);
+            font-size: 0.8rem;
+            color: var(--c-ink-soft);
+            text-align: center;
+            margin-top: 1rem;
+            display: block;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.2rem 2rem;
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: rgba(242, 240, 230, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+        .logo { font-family: var(--f-mono); font-weight: 700; font-size: 1.1rem; }
+        .nav-links a { margin-left: 20px; font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; }
+
+        /* --- META HEADER --- */
+        .header-meta {
+            display: flex; align-items: center; gap: 1.5rem;
+            margin-bottom: 4rem; padding-bottom: 2rem;
+            border-bottom: 1px solid var(--c-ink);
+            font-family: var(--f-mono); font-size: 0.9rem; color: var(--c-ink-soft);
+        }
+        .avatar {
+            width: 50px; height: 50px; background: var(--c-ink); color: var(--c-paper);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.2rem;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 8rem; padding: 4rem 0;
+            border-top: 1px solid var(--c-grid);
+            font-family: var(--f-mono); font-size: 0.9rem; color: var(--c-ink-soft);
+            text-align: center;
+        }
+
+        /* --- MOBILE --- */
+        @media(max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            main { padding: 100px 20px 60px 20px; }
+            .viz-wrapper { margin: 2rem 0; padding: 1rem; }
+            .header-meta { flex-direction: column; align-items: flex-start; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">LINEAR<span style="color:var(--c-accent)">HOPE</span></div>
+        <div class="nav-links">
+            <a href="#" style="border:none;">Article</a>
+            <a href="#" style="border:none;">Simulations</a>
+        </div>
+    </nav>
+
+    <main>
+
+        <!-- TITLE SECTION -->
+        <div style="font-family:var(--f-mono); color:var(--c-accent); font-weight:700; font-size:0.8rem; margin-bottom:1rem; letter-spacing:0.05em;">
+            DEEP LEARNING ARCHITECTURE
+        </div>
+        <h1>The Linear Hope: Mamba, SSMs & The Death of Softmax</h1>
+        
+        <div class="header-meta">
+            <div class="avatar">RG</div>
+            <div>
+                <span style="display:block; font-weight:700; color:var(--c-ink);">Rachit Gupta</span>
+                <span style="display:block; margin-top:4px;">Research Engineer &bull; Dec 3, 2025 &bull; 25 min read</span>
+            </div>
+        </div>
+
+        <!-- INTRO -->
+        <p>Hello everyone. Today we are going to go on a journey. We are going to go back to the future.</p>
+
+        <p>If you have been following the deep learning landscape for the last seven years, you know that the "shape" of intelligence has been a triangle. Specifically, the upper-triangular attention matrix of a Transformer. Since Vaswani et al. dropped the <em>"Attention Is All You Need"</em> paper in 2017, the recipe for Artificial General Intelligence (AGI) has been effectively frozen. You take a Multi-Head Self-Attention (MHSA) block, you stack it \(L\) times, you add some MLPs, you normalize, and you train it on the internet.</p>
+
+        <p>And it works. It works unreasonably, shockingly well. It gave us GPT-4, Claude, Llama, and Gemini. It effectively solved the "vanishing gradient" problem that plagued the Recurrent Neural Networks (RNNs) of the 2010s. It allowed us to parallelize training across thousands of GPUs, leading to the massive scale-up we see today.</p>
+
+        <p>But if you are deploying these models in production, or if you are just staring at your GPU memory usage while running a local LLM, you know there is a ghost in the machine. There is a <strong>"Quadratic Curse."</strong></p>
+
+        <p>Transformers are hungry. As the sequence length \(N\) grows, the compute required to process the context grows quadratically (\(O(N^2)\)). Worse, during inference, the memory bandwidth required to fetch the history (the KV Cache) grows linearly, choking our GPUs. We have effectively decided that the price of intelligence is keeping a perfect, lossless memory of every single token we have ever seen.</p>
+
+        <p>But recently, a rebellion has formed. A new class of architectures, led by <strong>Mamba</strong> (Gu & Dao) and <strong>RWKV</strong> ("Reinventing RNNs"), is challenging the throne. They promise the holy grail: <strong>Transformer-level performance with RNN-level inference costs.</strong></p>
+
+        <p>They call it the <strong>Linear Hope</strong>.</p>
+        <p>Let’s dig in.</p>
+
+        <!-- SECTION 1 -->
+        <h2>1. The Transformer Bottleneck: The Tyranny of the Scroll</h2>
+
+        <p>To understand why Mamba is such a big deal, we first have to grok <em>exactly</em> why Transformers are painful at inference time. The training phase is glorious; we operate in "Parallel Mode." We possess the whole document. We can feed in <code>token[0...T]</code> and predict <code>token[1...T+1]</code> all at once using a triangular causal mask. This parallelism is why Transformers killed LSTMs.</p>
+
+        <p>But <strong>Inference</strong> is a different beast. Inference is inherently sequential. You generate one word, append it, and generate the next. In a standard Transformer, to generate the 10,001st token, the model performs the Attention operation:</p>
+
+        <div class="math-block">
+            $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+        </div>
+
+        <p>Here is the bottleneck: <strong>The KV Cache</strong>. To calculate the attention scores for the <em>current</em> token, you need to compare its Query ($Q$) against the Keys ($K$) of <em>every single previous token</em>. You cannot throw them away.</p>
+
+        <ul>
+            <li><strong>1,000 tokens:</strong> Trivial. A few megabytes.</li>
+            <li><strong>100,000 tokens:</strong> Your Key-Value cache is now gigabytes in size.</li>
+            <li><strong>1,000,000 tokens:</strong> You are likely OOM (Out of Memory).</li>
+        </ul>
+
+        <p>Even if you have the VRAM, you hit the <strong>Memory Wall</strong>. Modern GPUs (like the H100) are beasts at math (FLOPS) but they are relatively slow at moving data (Bandwidth). For every token you generate, you have to drag that massive KV cache from HBM (High Bandwidth Memory) into the chip's SRAM, do a tiny matrix multiplication, and put it back. You are spending 99% of your time moving memory and 1% doing math.</p>
+
+        <!-- VIZ 1: COMPLEXITY -->
+        <div class="viz-wrapper">
+            <canvas id="vizComplexity"></canvas>
+            <div class="viz-controls">
+                <button class="viz-btn active" onclick="updateViz1('compute')">Total Compute</button>
+                <button class="viz-btn" onclick="updateViz1('memory')">Memory Bandwidth</button>
+            </div>
+            <span class="viz-caption">Figure 1: The Divergence. While Transformers (Red) scale quadratically, Mamba (Teal) remains linear/constant.</span>
+        </div>
+
+        <p><strong>The Metaphor: "The Scroll"</strong><br>
+        Imagine a scholar (the Transformer) trying to write a history book. To write the next sentence, the scholar unrolls the <em>entire</em> scroll of everything they have written so far. They read it from the beginning to find context, write <strong>one</strong> word, and then roll it back up. This is $O(N)$ per step.</p>
+        
+        <p>Mamba is different. Mamba is a scholar who maintains a mental summary. They don't look at the scroll. They look at their internal state, write a word, and update their state. This is $O(1)$ per step.</p>
+
+        <!-- SECTION 2 -->
+        <h2>2. Enter Mamba: Compressing the Universe into a State</h2>
+
+        <p>This is where <strong>State Space Models (SSMs)</strong> come in. The core thesis of Mamba is: <strong>Maybe we don't need the raw history. Maybe we just need a fixed-size state that compresses the history.</strong></p>
+
+        <p>If this sounds like an RNN, that's because it is. But it is an RNN built on first principles from Control Theory. It maps an input signal $x(t)$ to an output $y(t)$ via a latent state $h(t)$.</p>
+
+        <div class="math-block">
+            $$ h'(t) = \mathbf{A}h(t) + \mathbf{B}x(t) $$
+            $$ y(t) = \mathbf{C}h(t) $$
+        </div>
+
+        <p>Let's break down the variables:</p>
+        <ul>
+            <li>$h(t) \in \mathbb{R}^N$: The hidden state. This is the "summary." It has a fixed size $N$.</li>
+            <li>$\mathbf{A}$: The <strong>Evolution Matrix</strong>. This tells the state how to change over time (decay, rotate). In Mamba, this is typically diagonal for efficiency.</li>
+            <li>$\mathbf{B}, \mathbf{C}$: Projection matrices. $\mathbf{B}$ controls how much input enters the state; $\mathbf{C}$ controls how we view the state to produce output.</li>
+        </ul>
+
+        <h3>The Discretization (The Bridge to Digital)</h3>
+        <p>LLMs don't run in continuous time; they run on discrete tokens. We need to "discretize" this system using the <strong>Zero-Order Hold (ZOH)</strong> method. We introduce a timescale parameter $\Delta$ (delta). The continuous equation transforms into:</p>
+
+        <div class="math-block">
+            $$ h_t = \overline{\mathbf{A}} h_{t-1} + \overline{\mathbf{B}} x_t $$
+        </div>
+        
+        <p>Where $\overline{\mathbf{A}} = \exp(\Delta \mathbf{A})$. This simple linear recurrence is the magic. To compute the next state, you only need the previous state. No looking back at the scroll.</p>
+
+        <!-- VIZ 2: METAPHOR -->
+        <div class="viz-wrapper">
+            <canvas id="vizMetaphor"></canvas>
+            <div class="viz-controls">
+                <button class="viz-btn active" onclick="updateViz2('transformer')">Transformer Architecture</button>
+                <button class="viz-btn" onclick="updateViz2('mamba')">Mamba Architecture</button>
+            </div>
+            <span class="viz-caption">Figure 2: Architecture Topology. Transformers have dense all-to-all connections. Mamba is a single thread.</span>
+        </div>
+
+        <!-- SECTION 3 -->
+        <h2>3. The Selection Mechanism: The "Killer Feature"</h2>
+
+        <p>Standard State Space Models (like S4) are <strong>Linear Time Invariant (LTI)</strong>. This means the matrices $\mathbf{A}, \mathbf{B}, \mathbf{C}$ are constant for every token. This is a problem. It means the model processes the word "The" (noise) with the same mathematical dynamics as the word "Voldemort" (critical entity).</p>
+
+        <p>Gu & Dao introduced the <strong>Selection Mechanism</strong>. They made the parameters functions of the input:</p>
+
+        <pre><code class="language-python"># Pseudocode of Selection
+B_t = Linear(x_t)
+C_t = Linear(x_t)
+delta_t = Softplus(Parameter + Linear(x_t))</code></pre>
+
+        <p>This allows the model to act like a <strong>Gate</strong>.
+        <br>
+        1. <strong>Ignore:</strong> If $\Delta_t \to 0$, the state is preserved ($\overline{\mathbf{A}} \approx I$) and the input is ignored.
+        <br>
+        2. <strong>Focus:</strong> If $\Delta_t$ is large, the new input floods the state, overwriting old information.</p>
+
+        <!-- VIZ 3: NODE GRAPH -->
+        <div class="viz-wrapper">
+            <canvas id="vizNodeGraph"></canvas>
+            <span class="viz-caption">Figure 3: The Mamba Cell. Note how $x_t$ feeds into the parameter generation logic ($\Delta, B, C$).</span>
+        </div>
+
+        <h2>4. Simulation: Watching Mamba Think</h2>
+
+        <p>Let's visualize the Selection Mechanism in real-time. Below is a simulation of a Mamba state vector ($h_t$). The yellow line is the input stream. Most of it is noise (low amplitude). Suddenly, a "Keyword" (high amplitude spike) appears.</p>
+
+        <p>Watch how the <strong>State Heatmap</strong> reacts. When the keyword hits, the Selection Mechanism opens the gate ($\Delta$ increases), causing a rapid color change in the state. The model "latches" onto this information. When the input returns to noise, the gate closes, and the information persists in memory.</p>
+
+        <!-- VIZ 4: DYNAMIC SIM -->
+        <div class="viz-wrapper">
+            <canvas id="vizSimulation"></canvas>
+            <div class="viz-controls">
+                <button class="viz-btn" onclick="resetSim()">Reset Simulation</button>
+            </div>
+            <span class="viz-caption">Figure 4: Dynamic State Compression. High-intensity inputs trigger a state update.</span>
+        </div>
+
+        <h2>5. The Parallel Scan: How to Train Fast</h2>
+
+        <p>You might be asking: "If Mamba is recurrent ($h_t$ depends on $h_{t-1}$), how do we train it fast? Don't RNNs have to loop sequentially?"</p>
+
+        <p>This is where Mamba shines. Because the recurrence is <strong>linear</strong> (no non-linear activation functions like tanh between steps), we can use a <strong>Parallel Associative Scan</strong> (prefix sum).</p>
+
+        <p>Multiplication is associative: $(a \times b) \times c = a \times (b \times c)$. This property allows us to parallelize the computation. Instead of calculating step 1, then 2, then 3, we can calculate partial products in a tree structure. This reduces the sequential depth from $N$ to $\log N$.</p>
+
+        <p>Mamba implements a custom <strong>IO-Aware Kernel</strong> in CUDA/Triton. It loads the parameters into the GPU's fast SRAM, performs the scan, and writes back to HBM. This minimizes the expensive memory transfers that usually bottleneck Transformers.</p>
+
+        <h2>6. Conclusion: The Hybrid Future</h2>
+
+        <p>So, is Softmax dead? Probably not entirely. While Mamba is incredible at compression, compression is inherently lossy. The Transformer's "Scroll" is lossless.</p>
+
+        <p>This has led to <strong>Hybrid Architectures</strong> like <strong>Jamba</strong> (AI21 Labs), which sandwich Mamba layers with occasional Attention layers. This gives the best of both worlds: the infinite context and speed of SSMs, with the precision retrieval of Transformers.</p>
+        
+        <p>But the era of blind $O(N^2)$ scaling is over. The Linear Hope is real, and it is reshaping how we build intelligence.</p>
+        
+        <p>Happy hacking.</p>
+        
+        <footer>
+            <div>
+                <strong>The Linear Hope</strong><br>
+                <span>Authored by Rachit Gupta</span>
+            </div>
+            <div style="text-align: right;">
+                <a href="#" style="color:var(--c-ink); margin-left: 20px;">Twitter</a>
+                <a href="#" style="color:var(--c-ink); margin-left: 20px;">GitHub</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- JS: VISUALIZATION ENGINE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        /**
+         * ROBUST CANVAS CONTROLLER
+         * Handles High-DPI screens and resizing automatically via ResizeObserver.
+         * This prevents the "blank canvas" bug by waiting for the element to have size.
+         */
+        class CanvasController {
+            constructor(id, drawFn) {
+                this.canvas = document.getElementById(id);
+                this.ctx = this.canvas.getContext('2d');
+                this.drawFn = drawFn;
+                this.width = 0;
+                this.height = 0;
+                this.dpr = window.devicePixelRatio || 1;
+
+                // Watch for size changes
+                this.observer = new ResizeObserver((entries) => {
+                    const entry = entries[0];
+                    const rect = entry.contentRect;
+                    this.resize(rect.width);
+                });
+                this.observer.observe(this.canvas.parentElement);
+            }
+
+            resize(cssWidth) {
+                // Set logic dimensions
+                this.width = cssWidth;
+                this.height = Math.min(this.width * 0.55, 400); // Maintain aspect ratio
+                if(this.height < 300) this.height = 300;
+
+                // Set physical dimensions (Hi-DPI)
+                this.canvas.width = this.width * this.dpr;
+                this.canvas.height = this.height * this.dpr;
+                this.canvas.style.height = `${this.height}px`;
+
+                // Scale context once
+                this.ctx.scale(this.dpr, this.dpr);
+                
+                // Redraw
+                this.draw();
+            }
+
+            draw() {
+                // Draw function receives Logical Width/Height
+                if(this.width > 0 && this.height > 0) {
+                    this.drawFn(this.ctx, this.width, this.height);
+                }
+            }
+        }
+
+        /* --- VIZ 1: COMPLEXITY --- */
+        let mode1 = 'compute';
+        const viz1 = new CanvasController('vizComplexity', (ctx, w, h) => {
+            ctx.clearRect(0,0,w,h);
+            const pad = 50; const gw = w - pad*2; const gh = h - pad*2;
+
+            // Axes
+            ctx.strokeStyle = '#D1CEC4'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, h-pad); ctx.lineTo(w-pad, h-pad); ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#4A4D4B'; ctx.font = '14px JetBrains Mono'; ctx.textAlign = 'center';
+            ctx.fillText("Context Length (N)", w/2, h-15);
+            ctx.save(); ctx.translate(15, h/2); ctx.rotate(-Math.PI/2);
+            ctx.fillText(mode1 === 'compute' ? "Compute Cost" : "Memory Bandwidth", 0, 0); ctx.restore();
+
+            // Plot
+            const plot = (color, fn) => {
+                ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath();
+                for(let i=0; i<=gw; i+=4) {
+                    let n = i/gw; 
+                    let y = (h-pad) - (fn(n) * gh);
+                    if(i===0) ctx.moveTo(pad+i, y); else ctx.lineTo(pad+i, y);
+                }
+                ctx.stroke();
+            };
+
+            if(mode1 === 'compute') {
+                plot('#D64000', n => n*n); // Transformer N^2
+                plot('#2A9D8F', n => n*0.2); // Mamba N
+            } else {
+                plot('#D64000', n => n); // Transformer N (Cache)
+                plot('#2A9D8F', n => 0.1); // Mamba Constant
+            }
+
+            // Legend
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#D64000'; ctx.fillText("Transformer", w-pad, pad+20);
+            ctx.fillStyle = '#2A9D8F'; ctx.fillText("Mamba", w-pad, pad+40);
+        });
+
+        function updateViz1(m) {
+            mode1 = m;
+            document.querySelectorAll('#vizComplexity + div .viz-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            viz1.draw();
+        }
+
+        /* --- VIZ 2: METAPHOR --- */
+        let mode2 = 'transformer';
+        const viz2 = new CanvasController('vizMetaphor', (ctx, w, h) => {
+            ctx.clearRect(0,0,w,h);
+            const n = 6;
+            const gap = w / (n+2);
+            const cy = h/2;
+
+            // Draw Tokens
+            for(let i=1; i<=n; i++) {
+                let x = i*gap;
+                ctx.fillStyle = '#fff'; ctx.strokeStyle = '#1A1C1B'; ctx.lineWidth = 2;
+                ctx.fillRect(x-15, cy+30, 30, 30); ctx.strokeRect(x-15, cy+30, 30, 30);
+                ctx.fillStyle = '#1A1C1B'; ctx.textAlign = 'center'; ctx.font = '12px JetBrains Mono';
+                ctx.fillText(`x${i}`, x, cy+50);
+            }
+
+            if(mode2 === 'transformer') {
+                // Arcs
+                const tx = n*gap;
+                ctx.strokeStyle = 'rgba(214, 64, 0, 0.4)'; ctx.lineWidth = 1;
+                for(let i=1; i<n; i++) {
+                    let sx = i*gap;
+                    ctx.beginPath(); ctx.moveTo(sx, cy+30);
+                    ctx.quadraticCurveTo((sx+tx)/2, cy-60, tx, cy+30);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = '#D64000'; ctx.font = '14px JetBrains Mono';
+                ctx.fillText("Accessing Full History", w/2, 40);
+            } else {
+                // Line
+                ctx.strokeStyle = '#2A9D8F'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(gap, cy); ctx.lineTo(n*gap, cy); ctx.stroke();
+                // Nodes
+                for(let i=1; i<=n; i++) {
+                    ctx.fillStyle='#2A9D8F'; ctx.beginPath(); ctx.arc(i*gap, cy, 8, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.fillStyle = '#2A9D8F'; ctx.font = '14px JetBrains Mono';
+                ctx.fillText("Passing State h(t)", w/2, 40);
+            }
+        });
+
+        function updateViz2(m) {
+            mode2 = m;
+            document.querySelectorAll('#vizMetaphor + div .viz-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            viz2.draw();
+        }
+
+        /* --- VIZ 3: NODE GRAPH --- */
+        const viz3 = new CanvasController('vizNodeGraph', (ctx, w, h) => {
+            ctx.clearRect(0,0,w,h);
+            const cx = w/2; const cy = h/2;
+            
+            const node = (x,y,lbl,c) => {
+                ctx.beginPath(); ctx.arc(x,y,30,0,Math.PI*2);
+                ctx.fillStyle='#fff'; ctx.fill(); ctx.strokeStyle=c; ctx.lineWidth=3; ctx.stroke();
+                ctx.fillStyle='#1A1C1B'; ctx.font='bold 14px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText(lbl, x, y);
+            };
+
+            const prev = {x:cx-120, y:cy}; const curr = {x:cx+120, y:cy};
+            const inp = {x:cx, y:cy+80}; const gate = {x:cx, y:cy-20};
+
+            // Connections
+            ctx.strokeStyle='#D1CEC4'; ctx.lineWidth=2;
+            ctx.beginPath(); ctx.moveTo(prev.x+30, prev.y); ctx.lineTo(curr.x-30, curr.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(inp.x, inp.y-30); ctx.lineTo(gate.x, gate.y+30); ctx.stroke(); // Input to Gate
+            
+            // Branch to Params
+            ctx.strokeStyle='#D64000'; ctx.setLineDash([5,5]);
+            ctx.beginPath(); ctx.moveTo(inp.x, inp.y-30); ctx.lineTo(gate.x+20, gate.y+20); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw Nodes
+            node(prev.x, prev.y, 'h_t-1', '#1A1C1B');
+            node(curr.x, curr.y, 'h_t', '#2A9D8F');
+            node(inp.x, inp.y, 'x_t', '#1A1C1B');
+            
+            // Gate
+            ctx.fillStyle='#D64000'; ctx.fillText("Selection (Δ, B, C)", gate.x, gate.y-20);
+            ctx.strokeStyle='#D64000'; ctx.beginPath(); ctx.arc(gate.x, gate.y+10, 10, 0, Math.PI*2); ctx.stroke();
+        });
+
+        /* --- VIZ 4: DYNAMIC SIMULATION --- */
+        let simTokens = new Array(150).fill(0);
+        let simState = new Array(20).fill(0);
+        
+        // We use a standalone draw function for the loop, but use the controller for resizing
+        const viz4 = new CanvasController('vizSimulation', (ctx, w, h) => {
+             // This is handled by the animation loop
+        });
+
+        function runSimLoop() {
+            // Logic
+            simTokens.shift();
+            let val = (Math.random()-0.5)*0.1;
+            if(Math.random()<0.02) val = 1.5;
+            if(Math.random()<0.02) val = -1.5;
+            simTokens.push(val);
+
+            let delta = Math.abs(val) > 0.5 ? 0.6 : 0.05;
+            for(let i=0; i<20; i++) {
+                simState[i] = simState[i]*(1-delta) + val*delta;
+            }
+
+            // Draw
+            const ctx = viz4.ctx; 
+            const w = viz4.width; // Logical
+            const h = viz4.height; // Logical
+            
+            // Only draw if we have a valid size
+            if(w > 0 && h > 0) {
+                // Ensure we clear using logical dimensions (since context is scaled)
+                ctx.clearRect(0,0,w,h);
+
+                // Input Stream
+                ctx.strokeStyle = '#1A1C1B'; ctx.lineWidth = 1; ctx.beginPath();
+                const step = w/150;
+                for(let i=0; i<150; i++) {
+                    let y = 60 - simTokens[i]*30;
+                    if(i==0) ctx.moveTo(0,y); else ctx.lineTo(i*step, y);
+                }
+                ctx.stroke();
+                ctx.fillStyle = '#666'; ctx.font='12px JetBrains Mono'; ctx.fillText("Input Stream", 10, 20);
+
+                // Gate Flash
+                if(delta > 0.1) {
+                    ctx.fillStyle = 'rgba(214, 64, 0, 0.1)';
+                    ctx.fillRect(0,0,w,h);
+                    ctx.fillStyle = '#D64000'; ctx.fillText("GATE OPEN", w-100, 30);
+                }
+
+                // Heatmap
+                const cw = w/20;
+                for(let i=0; i<20; i++) {
+                    let v = simState[i];
+                    let col = v > 0 ? `rgba(42, 157, 143, ${Math.min(1, v*3)})` : `rgba(214, 64, 0, ${Math.min(1, Math.abs(v)*3)})`;
+                    ctx.fillStyle = col;
+                    ctx.fillRect(i*cw, 120, cw-1, 80);
+                }
+                ctx.fillStyle = '#666'; ctx.fillText("Latent State h(t)", 10, 110);
+            }
+
+            requestAnimationFrame(runSimLoop);
+        }
+
+        function resetSim() {
+            simTokens.fill(0);
+            simState.fill(0);
+        }
+
+        // Init Sim
+        requestAnimationFrame(runSimLoop);
+
+    </script>
+</body>
+</html>
