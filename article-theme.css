@@ -1,9 +1,38 @@
+/* --- DESIGN SYSTEM: PAPER & INK --- */
+:root {
+    --c-paper: #F2F0E6;
+    --c-ink: #1A1C1B;
+    --c-ink-soft: #4A4D4B;
+    --c-accent: #D64000;
+    --c-grid: #D1CEC4;
+    --c-highlight: rgba(214, 64, 0, 0.05);
+
+    --f-serif: 'Newsreader', serif;
+    --f-mono: 'JetBrains Mono', monospace;
+
+    --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
 /* --- UNIVERSAL ARTICLE FORMATTING --- */
+/* Added .layout-narrow for backward compatibility */
 .container,
-main {
+main,
+.layout-narrow {
     max-width: 800px;
     margin: 0 auto;
     padding: 140px 24px 100px 24px;
+}
+
+html,
+body {
+    background-color: var(--c-paper);
+    color: var(--c-ink);
+    font-family: var(--f-serif);
+    font-size: 19px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Typography */
@@ -23,6 +52,7 @@ h2 {
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--c-grid);
+    letter-spacing: -0.01em;
 }
 
 h3 {
@@ -41,13 +71,25 @@ p {
     font-size: 1.05rem;
 }
 
+/* Blockquote using --c-highlight from root */
 blockquote {
     border-left: 3px solid var(--c-accent);
     padding: 1.5rem;
     margin: 2rem 0;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--c-highlight, rgba(0, 0, 0, 0.03));
     color: var(--c-ink-soft);
     font-style: italic;
+}
+
+/* Utilities */
+.mono {
+    font-family: var(--f-mono);
+    font-size: 0.85em;
+}
+
+.caps {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* Code & Math Blocks */
@@ -136,10 +178,48 @@ pre code {
     border-color: var(--c-ink);
 }
 
+/* Animation Redefinition */
+.fade-in {
+    animation: fadeIn 0.8s var(--easing-sharp) forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Meta Block for Articles */
+.meta-block {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--c-grid);
+    border-bottom: 1px solid var(--c-grid);
+    padding: 1.5rem 0;
+    margin-bottom: 4rem;
+    font-family: var(--f-mono);
+    font-size: 0.85rem;
+}
+
+.meta-item label {
+    display: block;
+    color: var(--c-ink-soft);
+    font-size: 0.7em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.meta-item span {
+    font-weight: 600;
+    color: var(--c-ink);
+}
+
 @media (max-width: 850px) {
 
     .container,
-    main {
+    main,
+    .layout-narrow {
         padding: 100px 20px 60px 20px;
     }
 
@@ -152,5 +232,10 @@ pre code {
     .viz-container {
         margin: 3rem 0;
         padding: 1rem;
+    }
+
+    .meta-block {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 }

@@ -155,6 +155,25 @@
     });
 </script>
 
+<!-- Global Script to handle active nav states and dynamic years -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Dynamic Year Update
+        const currentYear = new Date().getFullYear();
+        document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = currentYear);
+        
+        // Active Nav State Highlighting
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+                link.style.opacity = '1';
+                link.style.color = 'var(--c-accent)';
+            }
+        });
+    });
+</script>
+
     <script>
         // VISCERAL SIMULATION
         const canvas = document.getElementById('forecast-canvas');
