@@ -589,7 +589,7 @@
                 <p class="hero-lead animate-enter delay-1">Prognosis is a non-profit research institute developing
                     rigorous mathematical frameworks to forecast advanced artificial intelligence timelines.</p>
                 <div class="hero-cta animate-enter delay-2">
-                    <a href="research.html" class="btn-primary">Read the <span class="dynamic-year">2026</span> Executive Report</a>
+                    <a href="research.html" class="btn-primary">Read the 2024 Executive Report</a>
                 </div>
             </div>
         </section>
@@ -662,7 +662,7 @@
         <div class="footer-col">
             <div class="logo t-tight" style="font-size: 1rem;">PROGNOSIS</div>
             <div>1200 17th St NW, Suite 500<br>Washington, DC 20036</div>
-            <div>&copy; <span class="dynamic-year">2026</span> Prognosis Research Institute</div>
+            <div>&copy; 2024 Prognosis Research Institute</div>
         </div>
         <div class="footer-col" style="align-items: flex-end; text-align: right;">
             <div class="footer-links">
@@ -869,26 +869,6 @@
             animate();
         }, 100);
     </script>
-
-<!-- Global Script to handle active nav states and dynamic years -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Dynamic Year Update
-        const currentYear = new Date().getFullYear();
-        document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = currentYear);
-        
-        // Active Nav State Highlighting
-        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
-                link.classList.add('active');
-                link.style.opacity = '1';
-                link.style.color = 'var(--c-accent)';
-            }
-        });
-    });
-</script>
-
 </body>
 
 </html>

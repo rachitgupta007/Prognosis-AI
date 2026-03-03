@@ -364,7 +364,7 @@
         <div class="footer-col">
             <div class="logo t-tight" style="font-size: 1rem;">PROGNOSIS</div>
             <div>1200 17th St NW, Suite 500<br>Washington, DC 20036</div>
-            <div>&copy; <span class="dynamic-year">2026</span> Prognosis Research Institute</div>
+            <div>&copy; 2024 Prognosis Research Institute</div>
         </div>
         <div class="footer-col" style="align-items: flex-end; text-align: right;">
             <div class="footer-links">
@@ -512,26 +512,6 @@
         });
 
     </script>
-
-<!-- Global Script to handle active nav states and dynamic years -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Dynamic Year Update
-        const currentYear = new Date().getFullYear();
-        document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = currentYear);
-        
-        // Active Nav State Highlighting
-        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
-                link.classList.add('active');
-                link.style.opacity = '1';
-                link.style.color = 'var(--c-accent)';
-            }
-        });
-    });
-</script>
-
 </body>
 
 </html>
