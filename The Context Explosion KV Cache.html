@@ -22,363 +22,25 @@
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-    <style>
-        /* --- DESIGN SYSTEM: PAPER & INK --- */
-        :root {
-            --c-paper: #F2F0E6;
-            --c-ink: #1A1C1B;
-            --c-ink-soft: #4A4D4B;
-            --c-accent: #D64000;
-            --c-grid: #D1CEC4;
-            --c-viz-bg: #EAE8DC;
-
-            --f-serif: 'Newsreader', serif;
-            --f-mono: 'JetBrains Mono', monospace;
-
-            --easing-sharp: cubic-bezier(0.76, 0, 0.24, 1);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body {
-            background-color: var(--c-paper);
-            color: var(--c-ink);
-            font-family: var(--f-serif);
-            font-size: 19px;
-            line-height: 1.7;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* ANIMATIONS */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-enter {
-            animation: fadeInUp 0.8s var(--easing-sharp) forwards;
-            opacity: 0;
-        }
-
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
-
-        /* UTILITY */
-        .mono { font-family: var(--f-mono); letter-spacing: -0.03em; font-size: 0.85rem; }
-        .caps { text-transform: uppercase; letter-spacing: 0.05em; }
-        
-        a {
-            color: inherit;
-            text-decoration: none;
-            border-bottom: 1px solid var(--c-grid);
-            transition: border-color 0.2s;
-        }
-        a:hover { border-color: var(--c-accent); color: var(--c-accent); }
-
-        /* LAYOUT */
-        .container {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 8rem 1.5rem 4rem;
-        }
-
-        /* NAVIGATION */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 3rem;
-            border-bottom: 1px solid rgba(26, 28, 27, 0.05);
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(242, 240, 230, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 100;
-        }
-
-        .logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; font-family: var(--f-mono); }
-        .nav-links { display: flex; gap: 2.5rem; }
-        .nav-links a { font-family: var(--f-mono); font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; border: none; }
-        .nav-links a:hover, .nav-links a.active { opacity: 1; color: var(--c-accent); }
-
-        /* TYPOGRAPHY */
-        h1 {
-            font-size: 3.5rem;
-            line-height: 1.1;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: -0.03em;
-            color: var(--c-ink);
-        }
-
-        h2 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-top: 3.5rem;
-            margin-bottom: 1.5rem;
-            letter-spacing: -0.02em;
-            border-top: 1px solid var(--c-grid);
-            padding-top: 1rem;
-        }
-
-        h3 {
-            font-size: 1.4rem;
-            font-weight: 500;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            font-style: italic;
-            color: var(--c-ink-soft);
-        }
-
-        p { margin-bottom: 1.5rem; text-align: justify; }
-
-        blockquote {
-            border-left: 3px solid var(--c-accent);
-            padding-left: 1.5rem;
-            margin: 2rem 0;
-            font-style: italic;
-            color: var(--c-ink-soft);
-            background: rgba(0,0,0,0.03);
-            padding: 1.5rem;
-            border-radius: 0 4px 4px 0;
-        }
-
-        /* CODE BLOCKS */
-        pre {
-            background: var(--c-ink);
-            color: var(--c-paper);
-            padding: 1.5rem;
-            border-radius: 4px;
-            font-family: var(--f-mono);
-            font-size: 0.8rem;
-            overflow-x: auto;
-            margin: 2rem 0;
-            line-height: 1.5;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        code {
-            font-family: var(--f-mono);
-            background: rgba(0,0,0,0.05);
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-        
-        pre code { background: none; padding: 0; color: #f2f0e6; }
-        
-        .math-block {
-            overflow-x: auto;
-            padding: 1rem 0;
-        }
-
-        /* CITATIONS */
-        .citation {
-            vertical-align: super;
-            font-size: 0.7em;
-            color: var(--c-accent);
-            cursor: pointer;
-            margin-left: 2px;
-            font-family: var(--f-mono);
-            border: none;
-            font-weight: bold;
-        }
-        
-        .popover {
-            position: absolute;
-            background: var(--c-ink);
-            color: var(--c-paper);
-            padding: 1rem;
-            border-radius: 4px;
-            width: 300px;
-            font-size: 0.85rem;
-            font-family: var(--f-mono);
-            z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            line-height: 1.4;
-            text-align: left;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: 30px;
-        }
-        
-        .popover.visible { opacity: 1; pointer-events: auto; }
-        
-        .popover::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            left: 50%;
-            margin-left: -6px;
-            border-width: 6px 6px 0;
-            border-style: solid;
-            border-color: var(--c-ink) transparent transparent transparent;
-        }
-
-        /* VISUALIZATION COMPONENTS */
-        .viz-container {
-            background-color: var(--c-viz-bg);
-            border: 1px solid var(--c-grid);
-            border-radius: 4px;
-            padding: 2rem;
-            margin: 3rem 0;
-            position: relative;
-        }
-        
-        .viz-title {
-            font-family: var(--f-mono);
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            color: var(--c-ink-soft);
-            margin-bottom: 1rem;
-            display: block;
-            border-bottom: 1px solid var(--c-grid);
-            padding-bottom: 0.5rem;
-        }
-
-        .viz-caption {
-            margin-top: 1rem;
-            font-family: var(--f-serif);
-            font-style: italic;
-            font-size: 0.9rem;
-            color: var(--c-ink-soft);
-            text-align: center;
-        }
-
-        .viz-controls {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .viz-btn {
-            background: transparent;
-            border: 1px solid var(--c-ink);
-            padding: 0.5rem 1rem;
-            font-family: var(--f-mono);
-            font-size: 0.8rem;
-            cursor: pointer;
-            color: var(--c-ink);
-            transition: all 0.2s;
-        }
-
-        .viz-btn:hover { background: var(--c-grid); }
-        .viz-btn.active { background: var(--c-ink); color: var(--c-paper); }
-
-        /* VIZ 1: Memory Bars */
-        .bar-chart {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: flex-start;
-            font-family: var(--f-mono);
-            font-size: 0.8rem;
-            padding: 1rem;
-        }
-        .bar-row {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            gap: 1rem;
-        }
-        .bar-label { width: 140px; text-align: right; font-weight: bold; color: var(--c-ink-soft); }
-        .bar-track { flex-grow: 1; background: #dcd9ce; height: 28px; position: relative; border-radius: 2px; overflow: hidden; border: 1px solid var(--c-grid); }
-        .bar-fill { height: 100%; background: var(--c-ink); transition: width 1s var(--easing-sharp); }
-        .bar-fill.accent { background: var(--c-accent); }
-        .bar-value { margin-left: 10px; font-weight: bold; }
-        
-        /* VIZ 2: Paged Grid */
-        .memory-grid {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .mem-block {
-            aspect-ratio: 1;
-            background: #dcd9ce;
-            border: 1px solid var(--c-grid);
-            transition: all 0.3s;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--f-mono);
-            font-size: 10px;
-            color: var(--c-ink-soft);
-        }
-        .mem-block.occupied { background: var(--c-ink-soft); opacity: 0.3; }
-        .mem-block.active { background: var(--c-accent); transform: scale(1.1); z-index: 10; border-color: var(--c-ink); color: #fff; font-weight: bold; }
-        
-        .logical-stream {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 2rem;
-            font-family: var(--f-mono);
-            font-size: 0.8rem;
-        }
-        .token {
-            padding: 8px 12px;
-            border: 1px solid var(--c-ink);
-            cursor: pointer;
-            background: var(--c-paper);
-            transition: 0.2s;
-        }
-        .token:hover { background: var(--c-ink); color: var(--c-paper); }
-
-        /* VIZ 3: Ring Animation (Fixed) */
-        .ring-svg {
-            max-width: 500px;
-            width: 100%;
-            margin: 0 auto;
-            overflow: visible;
-        }
-        .ring-path { fill: none; stroke: var(--c-grid); stroke-width: 1; stroke-dasharray: 4 4; }
-        .gpu-node { fill: var(--c-paper); stroke: var(--c-ink); stroke-width: 2; }
-        .kv-packet { 
-            fill: var(--c-accent); 
-            stroke: var(--c-ink);
-            stroke-width: 1px;
-        }
-        
-        /* FOOTER */
-        footer {
-            padding: 6rem 3rem;
-            border-top: 1px solid var(--c-grid);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            font-family: var(--f-mono);
-            font-size: 0.85rem;
-            color: var(--c-ink-soft);
-            margin-top: 6rem;
-            max-width: 1000px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .footer-col { display: flex; flex-direction: column; gap: 1rem; }
-        .footer-links { display: flex; gap: 2rem; justify-content: flex-end; }
-    </style>
+    <link rel="stylesheet" href="article-theme.css">
 </head>
 <body>
 
     <nav>
-        <div class="logo">RG.</div>
-        <div class="nav-links">
-            <a href="#" class="active">Essays</a>
-            <a href="#">Research</a>
-            <a href="#">About</a>
+    <div class="nav-left" style="display: flex; gap: 2rem; align-items: baseline;">
+        <a href="index.html" class="logo t-tight" style="font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--c-ink); text-decoration: none;">PROGNOSIS</a>
+        <div class="nav-status mono caps" style="font-size: 0.7rem; color: var(--c-accent); display: flex; align-items: center; gap: 0.5rem;">
+            <div class="status-dot" style="width: 6px; height: 6px; background: var(--c-accent); border-radius: 50%; animation: pulse 2s infinite;"></div>
+            Live Model Inference
         </div>
-    </nav>
+    </div>
+    <div class="nav-links" style="display: flex; gap: 2rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; text-transform: uppercase;">
+        <a href="index.html">Trends</a>
+        <a href="research.html">Publications</a>
+        <a href="models.html">Models</a>
+        <a href="about.html">About</a>
+    </div>
+</nav>
 
     <div class="container">
         
@@ -758,21 +420,62 @@
         </section>
 
         <footer>
-            <div class="footer-col">
-                <div class="logo">RG.</div>
-                <div>System Architecture & AI</div>
-            </div>
-            <div class="footer-col">
-                <div class="footer-links">
-                    <a href="#">Twitter</a>
-                    <a href="#">GitHub</a>
-                    <a href="#">RSS</a>
-                </div>
-            </div>
-            <div style="grid-column: span 2; margin-top: 2rem; font-size: 0.75rem; opacity: 0.6;">
-                &copy; 2025 Rachit Gupta. Typeset in Newsreader & JetBrains Mono.
-            </div>
-        </footer>
+    <div class="footer-col" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="logo t-tight" style="font-size: 1rem; color: var(--c-ink); font-family: 'JetBrains Mono', monospace; font-weight: bold;">PROGNOSIS</div>
+        <div>1200 17th St NW, Suite 500<br>Washington, DC 20036</div>
+        <div>&copy; <span class="dynamic-year">2026</span> Prognosis Research Institute</div>
+    </div>
+    <div class="footer-col" style="align-items: flex-end; text-align: right; display: flex; flex-direction: column; gap: 1rem;">
+        <div class="footer-links" style="display: flex; gap: 2rem;">
+            <!-- REPLACED DEAD CLICKS WITH ACTUAL LINKS OR DISABLED SPANS -->
+            <a href="https://twitter.com/yourhandle" target="_blank">Twitter / X</a>
+            <a href="https://github.com/rachitgupta007/Prognosis-AI" target="_blank">GitHub</a>
+            <span style="opacity: 0.5; cursor: not-allowed;" title="Coming Soon">Substack</span>
+        </div>
+        <div style="margin-top: 1rem;">
+            <input type="email" class="newsletter-input" placeholder="Email for updates..." style="background: transparent; border: none; border-bottom: 1px solid var(--c-ink-soft); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; padding: 0.5rem 0; width: 200px; color: var(--c-ink); outline: none;">
+        </div>
+        <div style="margin-top: 0.5rem; opacity: 0.6; font-size: 0.75rem;">501(c)(3) Non-Profit Organization</div>
+    </div>
+</footer>
+
+<!-- Global Script to handle active nav states and dynamic years -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Dynamic Year Update
+        const currentYear = new Date().getFullYear();
+        document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = currentYear);
+        
+        // Active Nav State Highlighting
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+                link.style.opacity = '1';
+                link.style.color = 'var(--c-accent)';
+            }
+        });
+    });
+</script>
+
+<!-- Global Script to handle active nav states and dynamic years -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Dynamic Year Update
+        const currentYear = new Date().getFullYear();
+        document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = currentYear);
+        
+        // Active Nav State Highlighting
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+                link.style.opacity = '1';
+                link.style.color = 'var(--c-accent)';
+            }
+        });
+    });
+</script>
 
     </div>
 
